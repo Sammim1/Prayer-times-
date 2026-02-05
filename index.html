@@ -3,58 +3,88 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Turbo Sender V10</title>
+    <title>Premium Turbo Sender</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@700&display=swap');
-        body { background: #000; color: #fff; font-family: sans-serif; }
-        .glass { background: rgba(255, 255, 255, 0.02); backdrop-filter: blur(25px); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 40px; }
-        .text-input { background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 20px; outline: none; transition: 0.3s; }
-        .text-input:focus { border-color: #3b82f6; }
-        .timer-font { font-family: 'JetBrains Mono', monospace; }
-        .close-btn { position: absolute; top: 5px; right: 5px; background: rgba(220, 38, 38, 0.9); width: 22px; height: 22px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 10px; cursor: pointer; border: 1px solid #000; z-index: 10; }
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@900&family=Hind+Siliguri:wght@400;700&display=swap');
+        
+        body { 
+            background: radial-gradient(circle at center, #111827 0%, #000 100%);
+            color: #fff;
+            font-family: 'Hind Siliguri', sans-serif;
+            min-height: 100vh;
+        }
+
+        .premium-glass {
+            background: rgba(255, 255, 255, 0.02);
+            backdrop-filter: blur(25px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+        }
+
+        .neon-text {
+            font-family: 'Orbitron', sans-serif;
+            text-shadow: 0 0 10px #3b82f6;
+        }
+
+        .close-btn {
+            position: absolute; top: 8px; right: 8px; background: rgba(239, 68, 68, 0.9);
+            width: 22px; height: 22px; border-radius: 50%; font-size: 10px;
+            display: flex; items-center; justify-content: center; cursor: pointer;
+            border: 1px solid #000; z-index: 20; transition: 0.2s;
+        }
+        .close-btn:hover { background: #ff0000; transform: scale(1.1); }
+
+        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #3b82f6; border-radius: 10px; }
     </style>
 </head>
-<body class="p-4 md:p-10 min-h-screen">
+<body class="p-4 md:p-10 flex flex-col items-center">
 
-    <div class="max-w-6xl mx-auto">
-        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8 text-center">
-            <div class="glass p-6">
-                <p class="text-[10px] text-gray-500 uppercase tracking-widest mb-1">প্রেরিত</p>
-                <span id="s-num" class="text-4xl font-black text-green-500 timer-font">0</span>
+    <div class="w-full max-w-5xl flex flex-col md:flex-row gap-6 mb-8 animate__animated animate__fadeInDown">
+        <div class="flex-1 premium-glass p-8 rounded-[40px] flex items-center justify-between">
+            <div>
+                <h1 class="neon-text text-2xl font-bold text-blue-500 uppercase">Cyber-Send</h1>
+                <p class="text-gray-500 text-[10px] tracking-[0.4em] uppercase mt-1">Ready to Launch</p>
             </div>
-            <div class="glass p-6">
-                <p class="text-[10px] text-gray-500 uppercase tracking-widest mb-1">বাকি</p>
-                <span id="p-num" class="text-4xl font-black text-blue-500 timer-font">0</span>
-            </div>
-            <div class="col-span-2 glass p-6 flex flex-col justify-center items-center">
-                <div id="p-bar-bg" class="w-full h-1 bg-gray-900 rounded-full overflow-hidden mb-2">
-                    <div id="p-bar" class="h-full bg-blue-500 w-0 transition-all duration-300"></div>
-                </div>
-                <p id="eta" class="text-[9px] text-gray-500 uppercase tracking-widest">Engine Standby</p>
+            <div class="text-right">
+                <div class="text-5xl font-black neon-text text-white" id="q-count">0</div>
+                <div class="text-[9px] text-blue-400 font-bold uppercase tracking-widest mt-1 italic">Images in Queue</div>
             </div>
         </div>
 
-        <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
-            <div class="lg:col-span-5 space-y-6">
-                <div class="glass p-8">
-                    <textarea id="msg-input" rows="5" class="w-full text-input p-5 text-sm mb-6" placeholder="মেসেজ লিখুন (এটি আলাদাভাবে যাবে)..."></textarea>
-                    
-                    <label class="h-32 flex flex-col items-center justify-center cursor-pointer border-2 border-dashed border-gray-800 hover:border-blue-500 rounded-3xl transition-all mb-6">
-                        <input type="file" id="f-in" multiple class="hidden">
-                        <span class="text-2xl">📎</span>
-                        <p class="text-[9px] text-gray-500 mt-2 font-bold uppercase">মিডিয়া যোগ করুন</p>
-                    </label>
+        <div class="flex-1 premium-glass p-8 rounded-[40px] flex items-center justify-between">
+            <div>
+                <p id="status-label" class="text-gray-400 text-sm italic">প্রেরিত সংখ্যা</p>
+                <p id="speed-label" class="text-[10px] text-blue-500 font-bold uppercase mt-1">Status: Idle</p>
+            </div>
+            <div class="text-right">
+                <div class="text-5xl font-black neon-text text-green-500" id="s-count">0</div>
+                <div class="text-[9px] text-gray-500 font-bold uppercase tracking-widest mt-1">Delivered</div>
+            </div>
+        </div>
+    </div>
 
-                    <button onclick="ignite()" id="btn" class="w-full py-5 bg-white text-black font-black rounded-3xl hover:bg-blue-600 hover:text-white transition-all shadow-2xl uppercase tracking-widest">
-                        Launch Turbo
-                    </button>
+    <div class="w-full max-w-5xl grid grid-cols-1 lg:grid-cols-12 gap-8">
+        
+        <div class="lg:col-span-4 space-y-6">
+            <div class="premium-glass p-6 rounded-[35px]">
+                <textarea id="msg-input" rows="4" class="w-full bg-white/5 border border-white/10 rounded-2xl p-4 text-sm focus:border-blue-500 outline-none transition-all mb-4" placeholder="আলাদা মেসেজ লিখতে পারেন..."></textarea>
+                
+                <label class="block border-2 border-dashed border-gray-800 hover:border-blue-500 rounded-3xl p-10 text-center cursor-pointer transition-all group mb-4">
+                    <input type="file" id="f-in" multiple accept="image/*" class="hidden">
+                    <span class="text-4xl group-hover:scale-110 transition-transform block">➕</span>
+                </label>
+
+                <button onclick="startRocket()" id="btn" class="w-full bg-white text-black font-black py-5 rounded-[25px] hover:bg-blue-600 hover:text-white transition-all active:scale-95 text-lg uppercase tracking-widest shadow-2xl">
+                    Launch Send
+                </button>
+            </div>
+        </div>
+
+        <div class="lg:col-span-8 premium-glass rounded-[40px] p-8 min-h-[400px]">
+            <div id="grid" class="grid grid-cols-3 md:grid-cols-5 gap-4 max-h-[500px] overflow-y-auto custom-scrollbar pr-2">
                 </div>
-            </div>
-
-            <div class="lg:col-span-7 glass p-8 min-h-[400px]">
-                <div id="grid" class="grid grid-cols-3 sm:grid-cols-5 gap-3"></div>
-            </div>
         </div>
     </div>
 
@@ -65,37 +95,38 @@
 
         document.getElementById('f-in').onchange = (e) => {
             queue = [...queue, ...Array.from(e.target.files)];
-            document.getElementById('p-num').innerText = queue.length;
             render();
         };
 
         function render() {
             const grid = document.getElementById('grid');
             grid.innerHTML = "";
+            document.getElementById('q-count').innerText = queue.length;
             queue.forEach((f, i) => {
                 const div = document.createElement('div');
-                div.className = "relative aspect-square rounded-2xl overflow-hidden glass border border-white/5";
-                div.innerHTML = `<img src="${URL.createObjectURL(f)}" class="w-full h-full object-cover">
-                                <div onclick="remove(${i})" class="close-btn">✕</div>`;
+                div.className = "relative aspect-square rounded-2xl overflow-hidden border border-white/5";
+                div.innerHTML = `
+                    <img src="${URL.createObjectURL(f)}" class="w-full h-full object-cover">
+                    <div onclick="remove(${i})" class="close-btn">✕</div>`;
                 grid.appendChild(div);
             });
         }
 
-        function remove(i) { queue.splice(i, 1); document.getElementById('p-num').innerText = queue.length; render(); }
+        function remove(i) { queue.splice(i, 1); render(); }
 
-        async function ignite() {
+        async function startRocket() {
             const msg = document.getElementById('msg-input').value;
             const btn = document.getElementById('btn');
-            const eta = document.getElementById('eta');
+            const status = document.getElementById('speed-label');
             
             if(!queue.length && !msg) return;
 
             btn.disabled = true;
             btn.innerText = "Processing...";
-            
-            // ১. টেক্সট মেসেজ আলাদা পাঠানো (যদি থাকে)
+            status.innerText = "Status: Executing";
+
+            // আলাদা মেসেজ পাঠানো
             if(msg) {
-                eta.innerText = "SENDING TEXT MESSAGE...";
                 try {
                     await fetch(`https://api.telegram.org/bot${TOKEN}/sendMessage`, {
                         method: "POST",
@@ -105,37 +136,33 @@
                 } catch(e) {}
             }
 
-            // ২. ছবিগুলো টার্বো মোডে পাঠানো (ক্যাপশন ছাড়াই)
+            // ছবি পাঠানো (Turbo Parallel)
             if(queue.length) {
-                const total = queue.length;
                 let sent = 0;
-                const concurrency = 20; // সুপার ফাস্ট স্পিড
+                const total = queue.length;
+                const parallel = 20;
 
-                for (let i = 0; i < total; i += concurrency) {
-                    const batch = queue.slice(i, i + concurrency);
+                for (let i = 0; i < total; i += parallel) {
+                    const batch = queue.slice(i, i + parallel);
                     await Promise.all(batch.map(async (file) => {
                         const fd = new FormData();
                         fd.append("chat_id", CHAT_ID);
                         fd.append("photo", file);
-                        // ক্যাপশন পাঠানো হচ্ছে না, তাই ছবি ফ্রেশ যাবে
-
                         try {
                             const res = await fetch(`https://api.telegram.org/bot${TOKEN}/sendPhoto`, { method: "POST", body: fd });
                             if(res.ok) {
                                 sent++;
-                                document.getElementById('s-num').innerText = sent;
-                                document.getElementById('p-num').innerText = total - sent;
-                                document.getElementById('p-bar').style.width = (sent/total*100) + "%";
-                                eta.innerText = `UPLOADING: ${sent}/${total}`;
+                                document.getElementById('s-count').innerText = sent;
+                                document.getElementById('q-count').innerText = total - sent;
                             }
                         } catch(e) {}
                     }));
                 }
             }
 
-            btn.innerText = "DELIVERED";
-            eta.innerText = "MISSION COMPLETE";
-            setTimeout(() => location.reload(), 2000);
+            btn.innerText = "Complete";
+            status.innerText = "Status: Delivered";
+            setTimeout(() => { location.reload(); }, 2000);
         }
     </script>
 </body>
