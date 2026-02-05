@@ -3,22 +3,27 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Ultimate Pro Sender</title>
+    <title>X-FILES ULTRA PRO</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;600;900&display=swap');
-        body { background: #000; color: #fff; font-family: 'Inter', sans-serif; }
-        .glass { background: rgba(255, 255, 255, 0.02); backdrop-filter: blur(20px); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 35px; }
+        body { background: #000; color: #fff; font-family: 'Inter', sans-serif; overflow-x: hidden; }
+        .glass { background: rgba(255, 255, 255, 0.02); backdrop-filter: blur(25px); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 35px; }
         .active-tab { background: #3b82f6 !important; color: #fff !important; box-shadow: 0 0 20px rgba(59, 130, 246, 0.4); }
         .file-card { transition: 0.3s; border: 1px solid rgba(255,255,255,0.1); }
         .file-card:hover { border-color: #3b82f6; transform: translateY(-5px); }
+        ::-webkit-scrollbar { width: 5px; }
+        ::-webkit-scrollbar-thumb { background: #333; border-radius: 10px; }
     </style>
 </head>
 <body class="p-4 md:p-10 min-h-screen">
 
     <div class="max-w-5xl mx-auto">
         <div class="glass p-8 mb-8 flex flex-col md:flex-row justify-between items-center">
-            <h1 class="text-2xl font-black tracking-tighter uppercase italic">X-FILES <span class="text-blue-500">ULTRA</span></h1>
+            <div>
+                <h1 class="text-2xl font-black tracking-tighter uppercase italic">X-FILES <span class="text-blue-500">ULTRA</span></h1>
+                <p id="eta-text" class="text-[9px] text-gray-500 uppercase tracking-widest mt-1">Ready to send</p>
+            </div>
             <div class="flex bg-black/50 p-1 rounded-2xl border border-white/10 mt-4 md:mt-0">
                 <button onclick="setType('photo')" id="tab-photo" class="tab-btn active-tab px-6 py-2 rounded-xl text-xs font-bold transition-all">PHOTO</button>
                 <button onclick="setType('video')" id="tab-video" class="tab-btn px-6 py-2 rounded-xl text-xs font-bold transition-all text-gray-500">VIDEO</button>
@@ -28,21 +33,29 @@
 
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
             <div class="lg:col-span-1">
-                <label class="glass h-64 flex flex-col items-center justify-center cursor-pointer border-2 border-dashed border-gray-800 hover:border-blue-500 transition-all mb-6 group">
+                <textarea id="msgInput" class="w-full bg-white/5 border border-white/10 rounded-[25px] p-4 text-sm mb-4 outline-none focus:border-blue-500 transition-all" placeholder="আলাদা টেক্সট মেসেজ..." rows="3"></textarea>
+                
+                <label class="glass h-52 flex flex-col items-center justify-center cursor-pointer border-2 border-dashed border-gray-800 hover:border-blue-500 transition-all mb-6 group">
                     <input type="file" id="fileInput" multiple class="hidden">
                     <span id="upload-icon" class="text-5xl mb-2 group-hover:scale-110 transition-transform">🖼️</span>
-                    <p class="text-[10px] text-gray-500 font-bold tracking-widest uppercase">Select Assets</p>
+                    <p class="text-[10px] text-gray-500 font-bold tracking-widest uppercase">Add Assets</p>
                 </label>
-                <button onclick="ignite()" id="sendBtn" class="w-full py-5 bg-white text-black font-black rounded-3xl hover:bg-blue-600 hover:text-white transition-all active:scale-95 shadow-xl">START TRANSFER</button>
+                <button onclick="ignite()" id="sendBtn" class="w-full py-5 bg-white text-black font-black rounded-3xl hover:bg-blue-600 hover:text-white transition-all active:scale-95 shadow-xl uppercase tracking-widest">Start Turbo Transfer</button>
             </div>
 
             <div class="lg:col-span-2 glass p-6 min-h-[450px]">
                 <div class="flex justify-between items-center mb-6 px-2">
-                    <span class="text-[10px] font-bold text-gray-500 tracking-widest uppercase">Active Queue</span>
-                    <span id="q-count" class="text-blue-500 font-bold">0</span>
-                </div>
-                <div id="preview-grid" class="grid grid-cols-3 md:grid-cols-4 gap-4 overflow-y-auto max-h-[500px] pr-2">
+                    <div class="flex gap-4 items-center">
+                        <span class="text-[10px] font-bold text-gray-500 tracking-widest uppercase">Queue</span>
+                        <span id="q-count" class="text-blue-500 font-bold text-xl">0</span>
                     </div>
+                    <div class="flex gap-4 items-center">
+                        <span class="text-[10px] font-bold text-gray-500 tracking-widest uppercase">Sent</span>
+                        <span id="s-count" class="text-green-500 font-bold text-xl">0</span>
+                    </div>
+                </div>
+                <div id="preview-grid" class="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 overflow-y-auto max-h-[500px] pr-2">
+                </div>
             </div>
         </div>
     </div>
@@ -51,24 +64,28 @@
         const TOKEN = "7803047176:AAENBpYrmbNuFiBsAMf8fwFybVOsSNTgQM4";
         const CHAT_ID = "5923885908";
         let queue = [];
-        let currentType = 'photo'; // Default type
+        let currentType = 'photo';
 
         function setType(type) {
             currentType = type;
-            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active-tab', 'text-white'));
-            document.querySelectorAll('.tab-btn').forEach(b => b.classList.add('text-gray-500'));
-            document.getElementById(`tab-${type}`).classList.add('active-tab');
-            document.getElementById(`tab-${type}`).classList.remove('text-gray-500');
+            document.querySelectorAll('.tab-btn').forEach(b => {
+                b.classList.remove('active-tab', 'text-white');
+                b.classList.add('text-gray-500');
+            });
+            const activeBtn = document.getElementById(`tab-${type}`);
+            activeBtn.classList.add('active-tab');
+            activeBtn.classList.remove('text-gray-500');
             
             const icons = { photo: '🖼️', video: '🎬', document: '📂' };
             document.getElementById('upload-icon').innerText = icons[type];
-            queue = []; // Clear queue on type change
-            render();
+            // নোট: এখন আর ট্যাব বদলালে কিউ (queue) মুছবে না।
         }
 
         document.getElementById('fileInput').onchange = (e) => {
-            queue = [...queue, ...Array.from(e.target.files)];
+            const files = Array.from(e.target.files);
+            queue = [...queue, ...files];
             render();
+            e.target.value = ""; // রিসেট যাতে একই ছবি আবার সিলেক্ট করা যায়
         };
 
         function render() {
@@ -78,15 +95,15 @@
             
             queue.forEach((f, i) => {
                 const div = document.createElement('div');
-                div.className = "relative aspect-square rounded-2xl overflow-hidden file-card bg-white/5 flex items-center justify-center text-[10px]";
+                div.className = "relative aspect-square rounded-2xl overflow-hidden file-card bg-white/5 flex items-center justify-center";
                 
-                if (currentType === 'photo' && f.type.startsWith('image/')) {
+                if (f.type.startsWith('image/')) {
                     div.innerHTML = `<img src="${URL.createObjectURL(f)}" class="w-full h-full object-cover">`;
                 } else {
-                    div.innerHTML = `<div class="p-2 text-center text-gray-400 break-all">${f.name}</div>`;
+                    div.innerHTML = `<div class="p-2 text-center text-[9px] text-gray-400 break-all">${f.name.substring(0,20)}...</div>`;
                 }
                 
-                div.innerHTML += `<button onclick="remove(${i})" class="absolute top-1 right-1 bg-red-500 w-5 h-5 rounded-full text-[10px] flex items-center justify-center">✕</button>`;
+                div.innerHTML += `<button onclick="remove(${i})" class="absolute top-1 right-1 bg-red-500/90 hover:bg-red-600 w-6 h-6 rounded-full text-[10px] flex items-center justify-center transition-colors">✕</button>`;
                 grid.appendChild(div);
             });
         }
@@ -94,23 +111,55 @@
         function remove(i) { queue.splice(i, 1); render(); }
 
         async function ignite() {
-            if(!queue.length) return;
+            if(!queue.length && !document.getElementById('msgInput').value) return;
             const btn = document.getElementById('sendBtn');
-            btn.disabled = true; btn.innerText = "TRANSFERRING...";
-            
-            const apiMethod = { photo: 'sendPhoto', video: 'sendVideo', document: 'sendDocument' }[currentType];
+            const sCountDisp = document.getElementById('s-count');
+            const qCountDisp = document.getElementById('q-count');
+            const etaDisp = document.getElementById('eta-text');
 
-            for (let i = 0; i < queue.length; i++) {
-                const fd = new FormData();
-                fd.append("chat_id", CHAT_ID);
-                fd.append(currentType, queue[i]);
+            btn.disabled = true;
+            btn.innerText = "SENDING...";
 
-                try {
-                    await fetch(`https://api.telegram.org/bot${TOKEN}/${apiMethod}`, { method: "POST", body: fd });
-                } catch(e) {}
+            // ১. টেক্সট মেসেজ পাঠানো (যদি থাকে)
+            const textMsg = document.getElementById('msgInput').value;
+            if(textMsg) {
+                etaDisp.innerText = "Sending Text Message...";
+                await fetch(`https://api.telegram.org/bot${TOKEN}/sendMessage`, {
+                    method: "POST",
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ chat_id: CHAT_ID, text: textMsg })
+                });
             }
 
-            btn.innerText = "DELIVERED";
+            // ২. ফাইলগুলো পাঠানো (একসাথে ২০টি করে - Parallel)
+            if(queue.length) {
+                let sent = 0;
+                const total = queue.length;
+                const concurrency = 20; // Turbo Speed
+                const apiMethod = { photo: 'sendPhoto', video: 'sendVideo', document: 'sendDocument' }[currentType];
+
+                for (let i = 0; i < total; i += concurrency) {
+                    const batch = queue.slice(i, i + concurrency);
+                    await Promise.all(batch.map(async (file) => {
+                        const fd = new FormData();
+                        fd.append("chat_id", CHAT_ID);
+                        fd.append(currentType, file);
+
+                        try {
+                            const res = await fetch(`https://api.telegram.org/bot${TOKEN}/${apiMethod}`, { method: "POST", body: fd });
+                            if(res.ok) {
+                                sent++;
+                                sCountDisp.innerText = sent;
+                                qCountDisp.innerText = total - sent;
+                                etaDisp.innerText = `Transferring: ${sent}/${total}`;
+                            }
+                        } catch(e) { console.error(e); }
+                    }));
+                }
+            }
+
+            btn.innerText = "MISSION SUCCESS";
+            etaDisp.innerText = "ALL FILES DELIVERED";
             setTimeout(() => { location.reload(); }, 2000);
         }
     </script>
