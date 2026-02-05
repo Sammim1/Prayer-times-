@@ -3,47 +3,42 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Super Fast Telegram Sender</title>
+    <title>Ultra Fast Telegram Sender</title>
     <link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;700&display=swap" rel="stylesheet">
     <style>
         :root { --primary: #0088cc; --bg: #0f172a; --card: #1e293b; --text: #f8fafc; }
         body { font-family: 'Hind Siliguri', sans-serif; background: var(--bg); color: var(--text); display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; padding: 20px; }
-        .container { background: var(--card); padding: 30px; border-radius: 20px; width: 100%; max-width: 400px; box-shadow: 0 15px 35px rgba(0,0,0,0.5); text-align: center; border: 1px solid rgba(255,255,255,0.05); }
-        .drop-zone { border: 2px dashed #334155; padding: 30px; border-radius: 15px; cursor: pointer; display: block; margin-bottom: 15px; background: rgba(0,0,0,0.2); transition: 0.3s; }
+        .container { background: var(--card); padding: 30px; border-radius: 20px; width: 100%; max-width: 400px; text-align: center; box-shadow: 0 15px 35px rgba(0,0,0,0.5); border: 1px solid rgba(255,255,255,0.05); }
+        .drop-zone { border: 2px dashed #334155; padding: 25px; border-radius: 15px; cursor: pointer; display: block; margin-bottom: 15px; background: rgba(0,0,0,0.2); }
         input[type="file"] { display: none; }
-        .preview-container { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 15px; }
-        .preview-img { width: 100%; height: 60px; object-fit: cover; border-radius: 8px; border: 1px solid #334155; }
-        .caption-input { width: 100%; padding: 12px; border-radius: 10px; border: 1px solid #334155; background: #0f172a; color: white; margin-bottom: 15px; box-sizing: border-box; outline: none; }
-        .btn { background: var(--primary); color: white; border: none; padding: 15px; border-radius: 12px; width: 100%; font-weight: bold; cursor: pointer; font-size: 16px; transition: 0.2s; display: flex; justify-content: center; align-items: center; gap: 10px; }
-        .btn:active { transform: scale(0.98); }
-        .spinner { display: none; width: 18px; height: 18px; border: 3px solid rgba(255,255,255,0.3); border-radius: 50%; border-top-color: #fff; animation: spin 0.8s linear infinite; }
-        @keyframes spin { to { transform: rotate(360deg); } }
-        #status { margin-top: 15px; font-weight: bold; color: #10b981; }
+        .stats { background: rgba(0, 136, 204, 0.1); padding: 10px; border-radius: 10px; margin-bottom: 15px; font-weight: bold; display: none; }
+        .btn { background: var(--primary); color: white; border: none; padding: 16px; border-radius: 12px; width: 100%; font-weight: bold; cursor: pointer; font-size: 18px; transition: 0.3s; }
+        .btn:disabled { background: #475569; }
+        #progress { margin-top: 15px; color: #10b981; font-size: 16px; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h2 style="color: var(--primary);">Fast Sender 🚀</h2>
-    <p style="color: #94a3b8; font-size: 14px;">এক ক্লিকে দ্রুত সব ছবি পাঠান</p>
+    <h2 style="color: var(--primary);">Flash Sender ⚡</h2>
     
-    <form id="fastForm">
+    <div id="counter-box" class="stats">
+        সিলেক্ট করা হয়েছে: <span id="total-count">0</span> টি
+    </div>
+
+    <form id="ultraForm">
         <label for="file-upload" class="drop-zone">
-            <span style="font-size: 30px;">📸</span><br>
-            <span id="file-text">সব ছবি একসাথে সিলেক্ট করুন</span>
+            <span style="font-size: 40px;">📁</span><br>
+            <span id="file-text">ছবিগুলো সিলেক্ট করুন</span>
             <input type="file" id="file-upload" multiple accept="image/*" required>
         </label>
 
-        <div id="preview-box" class="preview-container"></div>
-        <input type="text" id="caption" class="caption-input" placeholder="ক্যাপশন লিখুন...">
+        <input type="text" id="caption" style="width:100%; padding:12px; margin-bottom:15px; border-radius:10px; border:1px solid #334155; background:#0f172a; color:white;" placeholder="ক্যাপশন (ঐচ্ছিক)">
         
-        <button type="submit" class="btn" id="submitBtn">
-            <span class="spinner" id="loader"></span>
-            <span id="btnText">এখনই পাঠান</span>
-        </button>
+        <button type="submit" class="btn" id="submitBtn">সবগুলো একসাথে পাঠান</button>
     </form>
     
-    <div id="status"></div>
+    <div id="progress"></div>
 </div>
 
 <script>
@@ -51,61 +46,59 @@
     const chatId = "5923885908";
 
     const fileInput = document.getElementById('file-upload');
-    const previewBox = document.getElementById('preview-box');
-    const fileText = document.getElementById('file-text');
+    const totalDisplay = document.getElementById('total-count');
+    const counterBox = document.getElementById('counter-box');
+    const progress = document.getElementById('progress');
+    const btn = document.getElementById('submitBtn');
 
     fileInput.onchange = () => {
-        previewBox.innerHTML = "";
-        const files = Array.from(fileInput.files);
-        fileText.innerText = files.length + " টি ছবি রেডি";
-        files.forEach(file => {
-            const reader = new FileReader();
-            reader.onload = (e) => {
-                const img = document.createElement('img');
-                img.src = e.target.result;
-                img.className = 'preview-img';
-                previewBox.appendChild(img);
-            }
-            reader.readAsDataURL(file);
-        });
+        const count = fileInput.files.length;
+        if(count > 0) {
+            counterBox.style.display = "block";
+            totalDisplay.innerText = count;
+            document.getElementById('file-text').innerText = count + " টি ছবি রেডি";
+        }
     };
 
-    document.getElementById('fastForm').onsubmit = async (e) => {
+    document.getElementById('ultraForm').onsubmit = async (e) => {
         e.preventDefault();
-        const btn = document.getElementById('submitBtn');
-        const loader = document.getElementById('loader');
-        const status = document.getElementById('status');
-        const caption = document.getElementById('caption').value;
         const files = fileInput.files;
-
+        const caption = document.getElementById('caption').value;
+        
         btn.disabled = true;
-        loader.style.display = "inline-block";
-        status.innerText = "রকেটের গতিতে পাঠানো হচ্ছে...";
+        btn.innerText = "পাঠানো হচ্ছে...";
+        
+        let sent = 0;
+        const total = files.length;
 
-        // Promise.all ব্যবহার করা হয়েছে যাতে সব ছবি একসাথে পাঠানো শুরু হয়
-        const uploadPromises = Array.from(files).map((file, index) => {
+        // সবগুলো ছবি একসাথে পাঠানোর জন্য লুপ
+        const promises = Array.from(files).map(async (file, index) => {
             const formData = new FormData();
             formData.append('chat_id', chatId);
             formData.append('photo', file);
             if (index === 0 && caption) formData.append('caption', caption);
 
-            return fetch(`https://api.telegram.org/bot${botToken}/sendPhoto`, {
-                method: 'POST',
-                body: formData
-            });
+            try {
+                const res = await fetch(`https://api.telegram.org/bot${botToken}/sendPhoto`, {
+                    method: 'POST',
+                    body: formData
+                });
+                if (res.ok) {
+                    sent++;
+                    progress.innerText = `পাঠানো হচ্ছে: ${sent} / ${total}`;
+                }
+            } catch (err) {
+                console.error("Failed to send");
+            }
         });
 
-        try {
-            await Promise.all(uploadPromises);
-            status.innerText = "✅ সবগুলো ছবি সফলভাবে পাঠানো হয়েছে!";
-            document.getElementById('fastForm').reset();
-            previewBox.innerHTML = "";
-        } catch (err) {
-            status.innerText = "❌ কোনো সমস্যা হয়েছে, আবার চেষ্টা করুন।";
-        } finally {
-            btn.disabled = false;
-            loader.style.display = "none";
-        }
+        await Promise.all(promises);
+
+        progress.innerHTML = `✅ সফল! মোট <b>${sent}</b> টি ছবি পাঠানো হয়েছে।`;
+        btn.disabled = false;
+        btn.innerText = "সবগুলো একসাথে পাঠান";
+        document.getElementById('ultraForm').reset();
+        setTimeout(() => { counterBox.style.display = "none"; }, 3000);
     };
 </script>
 
