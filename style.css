@@ -1,0 +1,14 @@
+:root {
+    --glass: rgba(255, 255, 255, 0.05);
+    --gold: #ffcc00;
+    --neon: #00d2ff;
+}
+body {
+    margin: 0; background: #050a14; color: white;
+    font-family: 'Noto Serif Bengali', serif; 
+    display: flex; justify-content: center;
+    transition: all 0.5s ease;
+}
+/* আপনার আগের বাকি সব CSS এখানে থাকবে */
+.developer-name { font-size: 19px; font-weight: bold; color: #fff; text-shadow: 0 0 10px var(--neon); }
+.neon-line { height: 2px; width: 60%; background: var(--neon); margin: 10px auto; box-shadow: 0 0 10px var(--neon); }
