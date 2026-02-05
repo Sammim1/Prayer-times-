@@ -3,99 +3,41 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Premium Bulk Sender</title>
+    <title>Turbo Sender V6</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;600;800&display=swap');
-        
-        body { 
-            background: #000; 
-            color: #fff; 
-            font-family: 'Plus Jakarta Sans', sans-serif;
-            overflow-x: hidden;
-        }
-
-        /* Animated Background */
-        .bg-glow {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: radial-gradient(circle at 50% -20%, #1e3a8a 0%, transparent 50%),
-                        radial-gradient(circle at 0% 100%, #1e1b4b 0%, transparent 40%);
-            z-index: -1;
-        }
-
-        .glass {
-            background: rgba(255, 255, 255, 0.03);
-            backdrop-filter: blur(30px);
-            border: 1px solid rgba(255, 255, 255, 0.08);
-            border-radius: 40px;
-        }
-
-        .img-card {
-            aspect-ratio: 1;
-            border-radius: 20px;
-            overflow: hidden;
-            position: relative;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            transition: 0.4s cubic-bezier(0.2, 1, 0.3, 1);
-        }
-
-        .img-card:hover { transform: scale(1.05); border-color: #3b82f6; }
-
-        .btn-send {
-            background: #fff;
-            color: #000;
-            transition: 0.3s;
-            box-shadow: 0 0 30px rgba(59, 130, 246, 0.3);
-        }
-
-        .btn-send:hover { background: #3b82f6; color: #fff; box-shadow: 0 0 50px rgba(59, 130, 246, 0.6); }
-
-        /* Custom Scroll */
-        ::-webkit-scrollbar { width: 4px; }
-        ::-webkit-scrollbar-thumb { background: #333; border-radius: 10px; }
+        body { background: #000; color: #fff; font-family: sans-serif; overflow-x: hidden; }
+        .glass { background: rgba(255, 255, 255, 0.03); backdrop-filter: blur(20px); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 40px; }
+        .close-btn { position: absolute; top: 8px; right: 8px; background: rgba(220, 38, 38, 0.9); width: 20px; height: 20px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 10px; cursor: pointer; z-index: 10; border: 1px solid #000; }
+        .bar-glow { box-shadow: 0 0 15px #3b82f6; transition: width 0.2s ease; }
     </style>
 </head>
-<body class="p-4 md:p-12 min-h-screen">
-    <div class="bg-glow"></div>
+<body class="p-4 md:p-10 min-h-screen">
 
     <div class="max-w-6xl mx-auto">
-        <div class="flex justify-between items-center mb-16">
-            <div>
-                <h1 class="text-3xl font-extrabold tracking-tighter uppercase">X-SEND <span class="text-blue-500">PRO</span></h1>
-                <p id="status-text" class="text-xs text-gray-500 tracking-[0.4em] mt-1">SYSTEM READY</p>
-            </div>
-            <div class="text-right">
-                <span id="counter" class="text-6xl font-extrabold text-white opacity-90">0</span>
-                <p class="text-[10px] text-blue-400 font-bold uppercase tracking-widest mt-1 italic">Active Queue</p>
+        <div class="flex justify-between items-center mb-10 glass p-8">
+            <h1 class="text-2xl font-black tracking-tighter text-blue-500">TURBO <span class="text-white">PRO</span></h1>
+            <div class="flex gap-6 text-center">
+                <div><span id="q-num" class="text-4xl font-bold">0</span><p class="text-[9px] text-gray-500 uppercase">Queue</p></div>
+                <div><span id="s-num" class="text-4xl font-bold text-green-500">0</span><p class="text-[9px] text-gray-500 uppercase">Sent</p></div>
             </div>
         </div>
 
-        <div class="grid grid-cols-1 lg:grid-cols-12 gap-10">
-            <div class="lg:col-span-4 space-y-6">
-                <label class="glass p-16 flex flex-col items-center justify-center cursor-pointer border-2 border-dashed border-gray-800 hover:border-blue-500 transition-all group">
-                    <input type="file" id="files" multiple accept="image/*" class="hidden">
-                    <div class="text-5xl group-hover:scale-110 transition-transform mb-4">＋</div>
-                    <span class="text-xs font-bold text-gray-500 uppercase tracking-widest">Add Assets</span>
-                </label>
+        <div class="w-full h-[2px] bg-gray-900 mb-10 overflow-hidden">
+            <div id="p-bar" class="h-full bg-blue-500 w-0 bar-glow"></div>
+        </div>
 
-                <button onclick="startRocket()" id="sendBtn" class="btn-send w-full py-6 rounded-3xl font-black text-xl tracking-[0.2em] uppercase active:scale-95">
-                    IGNITE SEND
-                </button>
-                
-                <div class="glass p-6 rounded-[30px]">
-                    <div class="flex justify-between text-[10px] font-bold text-gray-500 uppercase mb-3">
-                        <span>Progress</span>
-                        <span id="percent">0%</span>
-                    </div>
-                    <div class="w-full h-1 bg-gray-900 rounded-full overflow-hidden">
-                        <div id="bar" class="h-full bg-blue-500 w-0 transition-all duration-300"></div>
-                    </div>
-                </div>
+        <div class="grid grid-cols-1 lg:grid-cols-4 gap-8">
+            <div class="lg:col-span-1">
+                <label class="glass p-16 flex items-center justify-center cursor-pointer border-2 border-dashed border-gray-800 hover:border-blue-500 mb-6">
+                    <input type="file" id="f-in" multiple accept="image/*" class="hidden">
+                    <span class="text-4xl">+</span>
+                </label>
+                <button onclick="ignite()" id="btn" class="w-full py-5 bg-white text-black font-black rounded-3xl hover:bg-blue-600 hover:text-white transition-all active:scale-95">SEND NOW</button>
             </div>
 
-            <div class="lg:col-span-8 glass p-8 min-h-[500px]">
-                <div id="grid" class="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
-                    </div>
+            <div class="lg:col-span-3 glass p-6 min-h-[400px]">
+                <div id="grid" class="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-4"></div>
             </div>
         </div>
     </div>
@@ -105,55 +47,36 @@
         const CHAT_ID = "5923885908";
         let queue = [];
 
-        const fileInput = document.getElementById('files');
-        const grid = document.getElementById('grid');
-        const counter = document.getElementById('counter');
-
-        fileInput.onchange = (e) => {
-            const newFiles = Array.from(e.target.files);
-            queue = [...queue, ...newFiles];
-            updateUI();
+        document.getElementById('f-in').onchange = (e) => {
+            queue = [...queue, ...Array.from(e.target.files)];
+            render();
         };
 
-        function updateUI() {
+        function render() {
+            const grid = document.getElementById('grid');
             grid.innerHTML = "";
-            counter.innerText = queue.length;
-            queue.forEach((file, i) => {
-                const url = URL.createObjectURL(file);
+            document.getElementById('q-num').innerText = queue.length;
+            queue.forEach((f, i) => {
                 const div = document.createElement('div');
-                div.className = "img-card animate__animated animate__fadeInUp";
-                div.innerHTML = `
-                    <img src="${url}" class="w-full h-full object-cover">
-                    <div onclick="remove(${i})" class="absolute inset-0 bg-red-600/80 opacity-0 hover:opacity-100 flex items-center justify-center cursor-pointer transition-opacity">
-                        <span class="text-xl">✕</span>
-                    </div>`;
+                div.className = "relative aspect-square rounded-2xl overflow-hidden glass";
+                div.innerHTML = `<img src="${URL.createObjectURL(f)}" class="w-full h-full object-cover"><div onclick="remove(${i})" class="close-btn">✕</div>`;
                 grid.appendChild(div);
             });
         }
 
-        function remove(i) {
-            queue.splice(i, 1);
-            updateUI();
-        }
+        function remove(i) { queue.splice(i, 1); render(); }
 
-        async function startRocket() {
-            if(queue.length === 0) return;
-            const btn = document.getElementById('sendBtn');
-            const status = document.getElementById('status-text');
-            const bar = document.getElementById('bar');
-            const percentText = document.getElementById('percent');
-
-            btn.disabled = true;
-            btn.innerText = "SENDING...";
-            status.innerText = "ENGINE ACTIVE";
-
+        async function ignite() {
+            if(!queue.length) return;
+            const btn = document.getElementById('btn');
+            btn.disabled = true; btn.innerText = "SENDING...";
+            
             let sent = 0;
             const total = queue.length;
+            const parallel = 15; // একসাথে ১৫টি ছবি যাবে
 
-            // Speed Hack: একসাথে ১০টি ছবি আপলোড হবে (Parallel)
-            const concurrency = 10; 
-            for (let i = 0; i < total; i += concurrency) {
-                const batch = queue.slice(i, i + concurrency);
+            for (let i = 0; i < total; i += parallel) {
+                const batch = queue.slice(i, i + parallel);
                 await Promise.all(batch.map(async (file) => {
                     const fd = new FormData();
                     fd.append("chat_id", CHAT_ID);
@@ -162,24 +85,14 @@
                         const res = await fetch(`https://api.telegram.org/bot${TOKEN}/sendPhoto`, { method: "POST", body: fd });
                         if(res.ok) {
                             sent++;
-                            let p = Math.round((sent / total) * 100);
-                            bar.style.width = p + "%";
-                            percentText.innerText = p + "%";
-                            counter.innerText = total - sent;
+                            document.getElementById('s-num').innerText = sent;
+                            document.getElementById('p-bar').style.width = (sent/total*100) + "%";
                         }
                     } catch(e) {}
                 }));
             }
-
-            status.innerText = "ALL ASSETS DELIVERED";
             btn.innerText = "SUCCESS";
-            setTimeout(() => {
-                btn.disabled = false;
-                btn.innerText = "IGNITE SEND";
-                queue = [];
-                updateUI();
-                bar.style.width = "0%";
-            }, 3000);
+            setTimeout(() => { location.reload(); }, 2000);
         }
     </script>
 </body>
