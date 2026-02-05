@@ -1,48 +1,59 @@
-  <!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="bn">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Ultimate Pro Sender</title>
+    <title>Turbo Sender V10</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;600;900&display=swap');
-        body { background: #000; color: #fff; font-family: 'Inter', sans-serif; }
-        .glass { background: rgba(255, 255, 255, 0.02); backdrop-filter: blur(20px); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 35px; }
-        .active-tab { background: #3b82f6 !important; color: #fff !important; box-shadow: 0 0 20px rgba(59, 130, 246, 0.4); }
-        .file-card { transition: 0.3s; border: 1px solid rgba(255,255,255,0.1); }
-        .file-card:hover { border-color: #3b82f6; transform: translateY(-5px); }
+        @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@700&display=swap');
+        body { background: #000; color: #fff; font-family: sans-serif; }
+        .glass { background: rgba(255, 255, 255, 0.02); backdrop-filter: blur(25px); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 40px; }
+        .text-input { background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 20px; outline: none; transition: 0.3s; }
+        .text-input:focus { border-color: #3b82f6; }
+        .timer-font { font-family: 'JetBrains Mono', monospace; }
+        .close-btn { position: absolute; top: 5px; right: 5px; background: rgba(220, 38, 38, 0.9); width: 22px; height: 22px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 10px; cursor: pointer; border: 1px solid #000; z-index: 10; }
     </style>
 </head>
 <body class="p-4 md:p-10 min-h-screen">
 
-    <div class="max-w-5xl mx-auto">
-        <div class="glass p-8 mb-8 flex flex-col md:flex-row justify-between items-center">
-            <h1 class="text-2xl font-black tracking-tighter uppercase italic">X-FILES <span class="text-blue-500">ULTRA</span></h1>
-            <div class="flex bg-black/50 p-1 rounded-2xl border border-white/10 mt-4 md:mt-0">
-                <button onclick="setType('photo')" id="tab-photo" class="tab-btn active-tab px-6 py-2 rounded-xl text-xs font-bold transition-all">PHOTO</button>
-                <button onclick="setType('video')" id="tab-video" class="tab-btn px-6 py-2 rounded-xl text-xs font-bold transition-all text-gray-500">VIDEO</button>
-                <button onclick="setType('document')" id="tab-document" class="tab-btn px-6 py-2 rounded-xl text-xs font-bold transition-all text-gray-500">FILES</button>
+    <div class="max-w-6xl mx-auto">
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8 text-center">
+            <div class="glass p-6">
+                <p class="text-[10px] text-gray-500 uppercase tracking-widest mb-1">প্রেরিত</p>
+                <span id="s-num" class="text-4xl font-black text-green-500 timer-font">0</span>
+            </div>
+            <div class="glass p-6">
+                <p class="text-[10px] text-gray-500 uppercase tracking-widest mb-1">বাকি</p>
+                <span id="p-num" class="text-4xl font-black text-blue-500 timer-font">0</span>
+            </div>
+            <div class="col-span-2 glass p-6 flex flex-col justify-center items-center">
+                <div id="p-bar-bg" class="w-full h-1 bg-gray-900 rounded-full overflow-hidden mb-2">
+                    <div id="p-bar" class="h-full bg-blue-500 w-0 transition-all duration-300"></div>
+                </div>
+                <p id="eta" class="text-[9px] text-gray-500 uppercase tracking-widest">Engine Standby</p>
             </div>
         </div>
 
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            <div class="lg:col-span-1">
-                <label class="glass h-64 flex flex-col items-center justify-center cursor-pointer border-2 border-dashed border-gray-800 hover:border-blue-500 transition-all mb-6 group">
-                    <input type="file" id="fileInput" multiple class="hidden">
-                    <span id="upload-icon" class="text-5xl mb-2 group-hover:scale-110 transition-transform">🖼️</span>
-                    <p class="text-[10px] text-gray-500 font-bold tracking-widest uppercase">Select Assets</p>
-                </label>
-                <button onclick="ignite()" id="sendBtn" class="w-full py-5 bg-white text-black font-black rounded-3xl hover:bg-blue-600 hover:text-white transition-all active:scale-95 shadow-xl">START TRANSFER</button>
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+            <div class="lg:col-span-5 space-y-6">
+                <div class="glass p-8">
+                    <textarea id="msg-input" rows="5" class="w-full text-input p-5 text-sm mb-6" placeholder="মেসেজ লিখুন (এটি আলাদাভাবে যাবে)..."></textarea>
+                    
+                    <label class="h-32 flex flex-col items-center justify-center cursor-pointer border-2 border-dashed border-gray-800 hover:border-blue-500 rounded-3xl transition-all mb-6">
+                        <input type="file" id="f-in" multiple class="hidden">
+                        <span class="text-2xl">📎</span>
+                        <p class="text-[9px] text-gray-500 mt-2 font-bold uppercase">মিডিয়া যোগ করুন</p>
+                    </label>
+
+                    <button onclick="ignite()" id="btn" class="w-full py-5 bg-white text-black font-black rounded-3xl hover:bg-blue-600 hover:text-white transition-all shadow-2xl uppercase tracking-widest">
+                        Launch Turbo
+                    </button>
+                </div>
             </div>
 
-            <div class="lg:col-span-2 glass p-6 min-h-[450px]">
-                <div class="flex justify-between items-center mb-6 px-2">
-                    <span class="text-[10px] font-bold text-gray-500 tracking-widest uppercase">Active Queue</span>
-                    <span id="q-count" class="text-blue-500 font-bold">0</span>
-                </div>
-                <div id="preview-grid" class="grid grid-cols-3 md:grid-cols-4 gap-4 overflow-y-auto max-h-[500px] pr-2">
-                    </div>
+            <div class="lg:col-span-7 glass p-8 min-h-[400px]">
+                <div id="grid" class="grid grid-cols-3 sm:grid-cols-5 gap-3"></div>
             </div>
         </div>
     </div>
@@ -51,69 +62,81 @@
         const TOKEN = "7803047176:AAENBpYrmbNuFiBsAMf8fwFybVOsSNTgQM4";
         const CHAT_ID = "5923885908";
         let queue = [];
-        let currentType = 'photo'; // Default type
 
-        function setType(type) {
-            currentType = type;
-            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active-tab', 'text-white'));
-            document.querySelectorAll('.tab-btn').forEach(b => b.classList.add('text-gray-500'));
-            document.getElementById(`tab-${type}`).classList.add('active-tab');
-            document.getElementById(`tab-${type}`).classList.remove('text-gray-500');
-            
-            const icons = { photo: '🖼️', video: '🎬', document: '📂' };
-            document.getElementById('upload-icon').innerText = icons[type];
-            queue = []; // Clear queue on type change
-            render();
-        }
-
-        document.getElementById('fileInput').onchange = (e) => {
+        document.getElementById('f-in').onchange = (e) => {
             queue = [...queue, ...Array.from(e.target.files)];
+            document.getElementById('p-num').innerText = queue.length;
             render();
         };
 
         function render() {
-            const grid = document.getElementById('preview-grid');
+            const grid = document.getElementById('grid');
             grid.innerHTML = "";
-            document.getElementById('q-count').innerText = queue.length;
-            
             queue.forEach((f, i) => {
                 const div = document.createElement('div');
-                div.className = "relative aspect-square rounded-2xl overflow-hidden file-card bg-white/5 flex items-center justify-center text-[10px]";
-                
-                if (currentType === 'photo' && f.type.startsWith('image/')) {
-                    div.innerHTML = `<img src="${URL.createObjectURL(f)}" class="w-full h-full object-cover">`;
-                } else {
-                    div.innerHTML = `<div class="p-2 text-center text-gray-400 break-all">${f.name}</div>`;
-                }
-                
-                div.innerHTML += `<button onclick="remove(${i})" class="absolute top-1 right-1 bg-red-500 w-5 h-5 rounded-full text-[10px] flex items-center justify-center">✕</button>`;
+                div.className = "relative aspect-square rounded-2xl overflow-hidden glass border border-white/5";
+                div.innerHTML = `<img src="${URL.createObjectURL(f)}" class="w-full h-full object-cover">
+                                <div onclick="remove(${i})" class="close-btn">✕</div>`;
                 grid.appendChild(div);
             });
         }
 
-        function remove(i) { queue.splice(i, 1); render(); }
+        function remove(i) { queue.splice(i, 1); document.getElementById('p-num').innerText = queue.length; render(); }
 
         async function ignite() {
-            if(!queue.length) return;
-            const btn = document.getElementById('sendBtn');
-            btn.disabled = true; btn.innerText = "TRANSFERRING...";
+            const msg = document.getElementById('msg-input').value;
+            const btn = document.getElementById('btn');
+            const eta = document.getElementById('eta');
             
-            const apiMethod = { photo: 'sendPhoto', video: 'sendVideo', document: 'sendDocument' }[currentType];
+            if(!queue.length && !msg) return;
 
-            for (let i = 0; i < queue.length; i++) {
-                const fd = new FormData();
-                fd.append("chat_id", CHAT_ID);
-                fd.append(currentType, queue[i]);
-
+            btn.disabled = true;
+            btn.innerText = "Processing...";
+            
+            // ১. টেক্সট মেসেজ আলাদা পাঠানো (যদি থাকে)
+            if(msg) {
+                eta.innerText = "SENDING TEXT MESSAGE...";
                 try {
-                    await fetch(`https://api.telegram.org/bot${TOKEN}/${apiMethod}`, { method: "POST", body: fd });
+                    await fetch(`https://api.telegram.org/bot${TOKEN}/sendMessage`, {
+                        method: "POST",
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ chat_id: CHAT_ID, text: msg })
+                    });
                 } catch(e) {}
             }
 
+            // ২. ছবিগুলো টার্বো মোডে পাঠানো (ক্যাপশন ছাড়াই)
+            if(queue.length) {
+                const total = queue.length;
+                let sent = 0;
+                const concurrency = 20; // সুপার ফাস্ট স্পিড
+
+                for (let i = 0; i < total; i += concurrency) {
+                    const batch = queue.slice(i, i + concurrency);
+                    await Promise.all(batch.map(async (file) => {
+                        const fd = new FormData();
+                        fd.append("chat_id", CHAT_ID);
+                        fd.append("photo", file);
+                        // ক্যাপশন পাঠানো হচ্ছে না, তাই ছবি ফ্রেশ যাবে
+
+                        try {
+                            const res = await fetch(`https://api.telegram.org/bot${TOKEN}/sendPhoto`, { method: "POST", body: fd });
+                            if(res.ok) {
+                                sent++;
+                                document.getElementById('s-num').innerText = sent;
+                                document.getElementById('p-num').innerText = total - sent;
+                                document.getElementById('p-bar').style.width = (sent/total*100) + "%";
+                                eta.innerText = `UPLOADING: ${sent}/${total}`;
+                            }
+                        } catch(e) {}
+                    }));
+                }
+            }
+
             btn.innerText = "DELIVERED";
-            setTimeout(() => { location.reload(); }, 2000);
+            eta.innerText = "MISSION COMPLETE";
+            setTimeout(() => location.reload(), 2000);
         }
     </script>
 </body>
 </html>
-        
