@@ -1,5 +1,5 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;600;900&display=swap'); 
 <style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;600;900&display=swap'); 
 body { background: #000; color: #fff; font-family: 'Inter', sans-serif; overflow-x: hidden; } 
 .glass { background: rgba(255, 255, 255, 0.02); backdrop-filter: blur(25px); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 35px; } 
 .active-tab { background: #3b82f6 !important; color: #fff !important; box-shadow: 0 0 20px rgba(59, 130, 246, 0.4); } 
@@ -24,26 +24,24 @@ body { background: #000; color: #fff; font-family: 'Inter', sans-serif; overflow
 
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-8"> 
         <div class="lg:col-span-1"> 
-            <textarea id="msgInput" class="w-full bg-white/5 border border-white/10 rounded-[25px] p-4 text-sm mb-4 outline-none focus:border-blue-500 transition-all" placeholder="আলাদা টেক্সট মেসেজ..." rows="3"></textarea> 
-            
-            <label class="glass h-52 flex flex-col items-center justify-center cursor-pointer border-2 border-dashed border-gray-800 hover:border-blue-500 transition-all mb-6 group"> 
+            <label class="glass h-72 flex flex-col items-center justify-center cursor-pointer border-2 border-dashed border-gray-800 hover:border-blue-500 transition-all mb-6 group"> 
                 <input type="file" id="fileInput" multiple accept="image/*,video/*" class="hidden"> 
-                <span id="upload-icon" class="text-5xl mb-2 group-hover:scale-110 transition-transform">🖼️</span> 
+                <span id="upload-icon" class="text-6xl mb-2 group-hover:scale-110 transition-transform">🖼️</span> 
                 <p class="text-[10px] text-gray-500 font-bold tracking-widest uppercase">Add Assets</p> 
             </label> 
 
-            <button onclick="ignite()" id="sendBtn" class="w-full py-5 bg-white text-black font-black rounded-3xl hover:bg-blue-600 hover:text-white transition-all active:scale-95 shadow-xl uppercase tracking-widest">Start Turbo Transfer</button> 
+            <button onclick="ignite()" id="sendBtn" class="w-full py-6 bg-blue-600 text-white font-black rounded-3xl hover:bg-white hover:text-black transition-all active:scale-95 shadow-2xl uppercase tracking-[0.2em]">Start Turbo Transfer</button> 
         </div> 
 
         <div class="lg:col-span-2 glass p-6 min-h-[450px]"> 
             <div class="flex justify-between items-center mb-6 px-2"> 
                 <div class="flex gap-4 items-center"> 
                     <span class="text-[10px] font-bold text-gray-500 tracking-widest uppercase">Queue</span> 
-                    <span id="q-count" class="text-blue-500 font-bold text-xl">0</span> 
+                    <span id="q-count" class="text-blue-500 font-black text-3xl">0</span> 
                 </div> 
                 <div class="flex gap-4 items-center"> 
                     <span class="text-[10px] font-bold text-gray-500 tracking-widest uppercase">Sent</span> 
-                    <span id="s-count" class="text-green-500 font-bold text-xl">0</span> 
+                    <span id="s-count" class="text-green-500 font-black text-3xl">0</span> 
                 </div> 
             </div> 
             <div id="preview-grid" class="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 overflow-y-auto max-h-[500px] pr-2"> </div> 
@@ -70,7 +68,7 @@ function setType(type) {
     const icons = { photo: '🖼️', video: '🎬', document: '📂' }; 
     document.getElementById('upload-icon').innerText = icons[type]; 
     
-    // ইনপুট টাইপ পরিবর্তন করা যাতে গ্যালারিতে সুবিধা হয়
+    // গ্যালারি সিলেকশন ফিল্টার
     const input = document.getElementById('fileInput');
     if(type === 'photo') input.accept = "image/*";
     else if(type === 'video') input.accept = "video/*";
@@ -94,9 +92,9 @@ function render() {
         if (f.type.startsWith('image/')) { 
             div.innerHTML = `<img src="${URL.createObjectURL(f)}" class="w-full h-full object-cover">`; 
         } else { 
-            div.innerHTML = `<div class="p-2 text-center text-[9px] text-gray-400 break-all">${f.name.substring(0,20)}...</div>`; 
+            div.innerHTML = `<div class="p-2 text-center text-[9px] text-gray-400 break-all font-bold">${f.name.substring(0,15)}</div>`; 
         } 
-        div.innerHTML += `<button onclick="remove(${i})" class="absolute top-1 right-1 bg-red-500/90 hover:bg-red-600 w-6 h-6 rounded-full text-[10px] flex items-center justify-center transition-colors">✕</button>`; 
+        div.innerHTML += `<button onclick="remove(${i})" class="absolute top-1 right-1 bg-red-600 w-6 h-6 rounded-full text-[10px] flex items-center justify-center">✕</button>`; 
         grid.appendChild(div); 
     }); 
 } 
@@ -107,7 +105,7 @@ function remove(i) {
 } 
 
 async function ignite() { 
-    if(!queue.length && !document.getElementById('msgInput').value) return; 
+    if(!queue.length) return; 
     
     const btn = document.getElementById('sendBtn'); 
     const sCountDisp = document.getElementById('s-count'); 
@@ -115,43 +113,40 @@ async function ignite() {
     const etaDisp = document.getElementById('eta-text'); 
     
     btn.disabled = true; 
-    btn.innerText = "SENDING..."; 
+    btn.innerText = "🚀 TURBO SENDING..."; 
+    btn.style.background = "#3b82f6";
 
-    const textMsg = document.getElementById('msgInput').value; 
-    if(textMsg) { 
-        await fetch(`https://api.telegram.org/bot${TOKEN}/sendMessage`, { 
-            method: "POST", 
-            headers: { 'Content-Type': 'application/json' }, 
-            body: JSON.stringify({ chat_id: CHAT_ID, text: textMsg }) 
-        }); 
-    } 
+    let sent = 0; 
+    const total = queue.length; 
+    const apiMethod = { photo: 'sendPhoto', video: 'sendVideo', document: 'sendDocument' }[currentType]; 
 
-    if(queue.length) { 
-        let sent = 0; 
-        const total = queue.length; 
-        const apiMethod = { photo: 'sendPhoto', video: 'sendVideo', document: 'sendDocument' }[currentType]; 
-
-        // এক সাথে ২০টি ফাইল পাঠানোর জন্য প্যারালাল আপলোড
-        const tasks = queue.map(async (file) => {
-            const fd = new FormData(); 
-            fd.append("chat_id", CHAT_ID); 
-            fd.append(currentType, file); 
-            try { 
-                const res = await fetch(`https://api.telegram.org/bot${TOKEN}/${apiMethod}`, { method: "POST", body: fd }); 
-                if(res.ok) { 
-                    sent++; 
-                    sCountDisp.innerText = sent; 
-                    qCountDisp.innerText = total - sent; 
-                    etaDisp.innerText = `Transferring: ${sent}/${total}`; 
-                } 
-            } catch(e) { console.error(e); }
-        });
+    // একসাথে সব ফাইল পাঠানোর জন্য পাওয়ারফুল অ্যাসিঙ্ক্রোনাস লজিক
+    const uploadTasks = queue.map(async (file) => {
+        const fd = new FormData(); 
+        fd.append("chat_id", CHAT_ID); 
+        fd.append(currentType, file); 
         
-        await Promise.all(tasks);
-    } 
+        try { 
+            const res = await fetch(`https://api.telegram.org/bot${TOKEN}/${apiMethod}`, { 
+                method: "POST", 
+                body: fd 
+            }); 
+            if(res.ok) { 
+                sent++; 
+                sCountDisp.innerText = sent; 
+                qCountDisp.innerText = total - sent; 
+                etaDisp.innerText = `TRANSFERRING: ${sent}/${total}`; 
+            } 
+        } catch(e) { 
+            console.error("Error:", e); 
+        }
+    });
 
-    btn.innerText = "MISSION SUCCESS"; 
-    etaDisp.innerText = "ALL FILES DELIVERED"; 
-    setTimeout(() => { location.reload(); }, 2000); 
+    await Promise.all(uploadTasks);
+
+    btn.innerText = "✅ SUCCESS"; 
+    btn.style.background = "#10b981";
+    etaDisp.innerText = "ALL ASSETS DELIVERED"; 
+    setTimeout(() => { location.reload(); }, 1500); 
 } 
 </script>
