@@ -12,13 +12,12 @@ body{background:#000;color:#fff;font-family:'Inter',sans-serif}
 .glass{background:rgba(255,255,255,.03);backdrop-filter:blur(25px);
 border:1px solid rgba(255,255,255,.08);border-radius:30px}
 .active-tab{background:#3b82f6;color:#fff}
-.file-card{border:1px solid rgba(255,255,255,.1);transition:.3s}
-.file-card:hover{border-color:#3b82f6;transform:translateY(-4px)}
+.file-card{border:1px solid rgba(255,255,255,.1);transition:.2s}
+.file-card:hover{border-color:#3b82f6}
 </style>
 </head>
 
 <body class="p-4 md:p-10">
-
 <div class="max-w-5xl mx-auto">
 
 <!-- HEADER -->
@@ -27,15 +26,16 @@ border:1px solid rgba(255,255,255,.08);border-radius:30px}
     <h1 class="text-2xl font-black italic">
       X-FILES <span class="text-blue-500">ULTRA</span>
     </h1>
-    <p id="eta-text" class="text-[10px] text-gray-400 uppercase">
-      Ready
-    </p>
+    <p id="etaText" class="text-[10px] text-gray-400 uppercase">Ready</p>
   </div>
 
   <div class="flex bg-black/50 p-1 rounded-xl">
-    <button id="tab-photo" onclick="setType('photo')" class="tab-btn active-tab px-4 py-2 rounded-lg text-xs font-bold">PHOTO</button>
-    <button id="tab-video" onclick="setType('video')" class="tab-btn px-4 py-2 text-xs text-gray-400">VIDEO</button>
-    <button id="tab-document" onclick="setType('document')" class="tab-btn px-4 py-2 text-xs text-gray-400">FILES</button>
+    <button onclick="setType('photo')" id="tab-photo"
+      class="tab-btn active-tab px-4 py-2 rounded-lg text-xs font-bold">PHOTO</button>
+    <button onclick="setType('video')" id="tab-video"
+      class="tab-btn px-4 py-2 text-xs text-gray-400">VIDEO</button>
+    <button onclick="setType('document')" id="tab-document"
+      class="tab-btn px-4 py-2 text-xs text-gray-400">FILES</button>
   </div>
 </div>
 
@@ -43,35 +43,30 @@ border:1px solid rgba(255,255,255,.08);border-radius:30px}
 
 <!-- LEFT -->
 <div>
-  <label class="glass h-48 flex flex-col items-center justify-center cursor-pointer border-2 border-dashed border-gray-700 hover:border-blue-500">
-    
-    <!-- 🔥 UPDATED INPUT: GALLERY OPENS -->
-    <input 
-      type="file"
-      id="fileInput"
-      multiple
-      accept="image/*"
-      class="hidden">
-    <!-- 🔥 END -->
+<label class="glass h-48 flex flex-col items-center justify-center cursor-pointer
+border-2 border-dashed border-gray-700 hover:border-blue-500">
 
-    <span id="upload-icon" class="text-5xl">🖼️</span>
-    <p class="text-[10px] text-gray-400 mt-2 uppercase">Add Photos</p>
-  </label>
+<input id="fileInput" type="file" multiple class="hidden">
 
-  <button id="sendBtn" onclick="ignite()"
-    class="w-full mt-5 py-4 bg-white text-black font-black rounded-2xl hover:bg-blue-600 hover:text-white">
-    START TRANSFER
-  </button>
+<span id="uploadIcon" class="text-5xl">🖼️</span>
+<p class="text-[10px] text-gray-400 mt-2 uppercase">Select Files</p>
+</label>
+
+<button onclick="ignite()" id="sendBtn"
+class="w-full mt-5 py-4 bg-white text-black font-black rounded-2xl">
+START TRANSFER
+</button>
 </div>
 
 <!-- RIGHT -->
 <div class="lg:col-span-2 glass p-5 min-h-[400px]">
-  <div class="flex justify-between mb-4">
-    <div>Queue: <span id="q-count" class="text-blue-500 font-bold">0</span></div>
-    <div>Sent: <span id="s-count" class="text-green-500 font-bold">0</span></div>
-  </div>
+<div class="flex justify-between mb-4">
+<div>Queue: <span id="qCount" class="text-blue-500 font-bold">0</span></div>
+<div>Sent: <span id="sCount" class="text-green-500 font-bold">0</span></div>
+</div>
 
-  <div id="preview-grid" class="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4"></div>
+<div id="previewGrid"
+class="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4"></div>
 </div>
 
 </div>
@@ -84,71 +79,122 @@ const CHAT_ID = "YOUR_CHAT_ID";
 let queue = [];
 let currentType = "photo";
 
+const fileInput = document.getElementById("fileInput");
+const qCount = document.getElementById("qCount");
+const sCount = document.getElementById("sCount");
+const etaText = document.getElementById("etaText");
+const uploadIcon = document.getElementById("uploadIcon");
+const previewGrid = document.getElementById("previewGrid");
+
 function setType(type){
   currentType = type;
+
   document.querySelectorAll(".tab-btn").forEach(b=>{
     b.classList.remove("active-tab"); b.classList.add("text-gray-400");
   });
   document.getElementById("tab-"+type).classList.add("active-tab");
-  document.getElementById("upload-icon").innerText =
-    type==="photo"?"🖼️":type==="video"?"🎬":"📂";
+
+  if(type==="photo"){
+    fileInput.accept="image/*";
+    uploadIcon.innerText="🖼️";
+  }
+  else if(type==="video"){
+    fileInput.accept="video/*";
+    uploadIcon.innerText="🎬";
+  }
+  else{
+    fileInput.accept="*/*";
+    uploadIcon.innerText="📂";
+  }
 }
 
 fileInput.onchange = e=>{
-  queue.push(...e.target.files);
+  const files = Array.from(e.target.files);
+  queue.push(...files);
   render();
   e.target.value="";
 };
 
 function render(){
-  preview-grid.innerHTML="";
-  q-count.innerText = queue.length;
+  previewGrid.innerHTML="";
+  qCount.innerText = queue.length;
+
   queue.forEach(f=>{
     const d=document.createElement("div");
-    d.className="aspect-square rounded-xl overflow-hidden file-card bg-white/5";
-    d.innerHTML=`<img src="${URL.createObjectURL(f)}" class="w-full h-full object-cover">`;
-    preview-grid.appendChild(d);
+    d.className="aspect-square rounded-xl overflow-hidden file-card bg-white/5 flex items-center justify-center";
+
+    if(f.type.startsWith("image/")){
+      d.innerHTML=`<img src="${URL.createObjectURL(f)}" class="w-full h-full object-cover">`;
+    } else {
+      d.innerHTML=`<div class="text-[9px] p-2 text-gray-400 break-all">${f.name}</div>`;
+    }
+    previewGrid.appendChild(d);
   });
 }
 
 async function ignite(){
   if(!queue.length) return;
 
+  let sent = 0;
+  etaText.innerText="Uploading...";
   sendBtn.disabled=true;
-  sendBtn.innerText="UPLOADING...";
-  let sent=0;
 
-  for(let i=0;i<queue.length;i+=10){
-    let batch=queue.slice(i,i+10);
-    let ok=false;
-    while(!ok){
-      try{
-        const fd=new FormData();
-        fd.append("chat_id",CHAT_ID);
-        fd.append("media",JSON.stringify(
-          batch.map((_,x)=>({type:"photo",media:`attach://p${x}`}))
-        ));
-        batch.forEach((f,x)=>fd.append(`p${x}`,f));
+  if(currentType==="photo"){
+    for(let i=0;i<queue.length;i+=10){
+      let batch=queue.slice(i,i+10);
+      let done=false;
 
-        const r=await fetch(`https://api.telegram.org/bot${TOKEN}/sendMediaGroup`,
-          {method:"POST",body:fd});
+      while(!done){
+        try{
+          const fd=new FormData();
+          fd.append("chat_id",CHAT_ID);
+          fd.append("media",JSON.stringify(
+            batch.map((_,x)=>({type:"photo",media:`attach://p${x}`}))
+          ));
+          batch.forEach((f,x)=>fd.append(`p${x}`,f));
 
-        if(r.ok){
-          ok=true;
-          sent+=batch.length;
-          s-count.innerText=sent;
-          q-count.innerText=queue.length-sent;
-          eta-text.innerText=`Uploading ${sent}/${queue.length}`;
-        } else await sleep(2000);
-      }catch{ await sleep(2000); }
+          const r=await fetch(
+            `https://api.telegram.org/bot${TOKEN}/sendMediaGroup`,
+            {method:"POST",body:fd}
+          );
+
+          if(r.ok){
+            done=true;
+            sent+=batch.length;
+            sCount.innerText=sent;
+            qCount.innerText=queue.length-sent;
+            etaText.innerText=`${sent}/${queue.length}`;
+          }
+        }catch{}
+      }
+    }
+  } else {
+    const api=currentType==="video"?"sendVideo":"sendDocument";
+
+    for(let f of queue){
+      let ok=false;
+      while(!ok){
+        try{
+          const fd=new FormData();
+          fd.append("chat_id",CHAT_ID);
+          fd.append(currentType,f);
+          const r=await fetch(
+            `https://api.telegram.org/bot${TOKEN}/${api}`,
+            {method:"POST",body:fd}
+          );
+          if(r.ok){
+            ok=true;
+            sent++;
+            sCount.innerText=sent;
+            qCount.innerText=queue.length-sent;
+          }
+        }catch{}
+      }
     }
   }
 
-  eta-text.innerText="ALL PHOTOS SENT ✔";
-  sendBtn.innerText="DONE";
+  etaText.innerText="ALL DONE ✔";
 }
-
-const sleep = ms => new Promise(r=>setTimeout(r,ms));
 </script>
 
 </body>
