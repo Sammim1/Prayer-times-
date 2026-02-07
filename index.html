@@ -10,23 +10,23 @@
         body { background: #000; color: #fff; font-family: 'Inter', sans-serif; overflow-x: hidden; } 
         .glass { background: rgba(255, 255, 255, 0.05); backdrop-filter: blur(25px); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 35px; } 
         
-        /* নামের শেডো বক্স ডিজাইন */
-        .name-box {
+        /* নামের বক্স ডিজাইন */
+        .name-container {
             background: rgba(59, 130, 246, 0.1);
             border: 1px solid rgba(59, 130, 246, 0.3);
-            box-shadow: 0 0 30px rgba(59, 130, 246, 0.2);
-            border-radius: 20px;
-            padding: 10px 30px;
+            box-shadow: 0 0 20px rgba(59, 130, 246, 0.2);
+            border-radius: 12px;
+            padding: 4px 15px;
             display: inline-block;
+            margin-bottom: 8px;
         }
         .owner-tag { 
-            background: linear-gradient(90deg, #3b82f6, #60a5fa, #fff); 
+            background: linear-gradient(90deg, #3b82f6, #fff); 
             -webkit-background-clip: text; 
             -webkit-text-fill-color: transparent; 
-            font-size: 1.4rem; 
+            font-size: 0.9rem; 
             font-weight: 900; 
-            letter-spacing: 6px;
-            text-shadow: 0 0 15px rgba(59, 130, 246, 0.5);
+            letter-spacing: 4px;
         }
 
         .active-tab { background: #3b82f6 !important; color: #fff !important; box-shadow: 0 0 25px rgba(59, 130, 246, 0.5); } 
@@ -38,16 +38,14 @@
 <body class="p-4">
 
 <div class="max-w-5xl mx-auto"> 
-    <div class="text-center mb-8 mt-4">
-        <div class="name-box">
-            <h2 class="owner-tag uppercase">GX.Sammim</h2>
-        </div>
-    </div>
-
+    
     <div class="glass p-8 mb-8 flex flex-col md:flex-row justify-between items-center"> 
         <div> 
+            <div class="name-container">
+                <h2 class="owner-tag uppercase">GX.Sammim</h2>
+            </div>
             <h1 class="text-3xl font-black tracking-tighter uppercase italic">X-FILES <span class="text-blue-500">ULTRA</span></h1> 
-            <p id="eta-text" class="text-[10px] text-blue-400 font-bold uppercase tracking-widest mt-1">Ready for Secure Transfer</p> 
+            <p id="eta-text" class="text-[10px] text-blue-400 font-bold uppercase tracking-widest mt-1">Direct Gallery Access Enabled</p> 
         </div> 
         <div class="flex bg-black/50 p-1 rounded-2xl border border-white/10 mt-6 md:mt-0"> 
             <button onclick="setType('photo')" id="tab-photo" class="tab-btn active-tab px-8 py-2 rounded-xl text-xs font-black transition-all">PHOTO</button> 
@@ -58,9 +56,9 @@
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-8"> 
         <div class="lg:col-span-1"> 
             <label class="glass h-64 flex flex-col items-center justify-center cursor-pointer border-2 border-dashed border-gray-700 hover:border-blue-500 transition-all mb-6 group"> 
-                <input type="file" id="fileInput" multiple accept="image/*,video/*,.pdf,.doc,.docx,.zip" class="hidden"> 
+                <input type="file" id="fileInput" multiple accept="image/*" class="hidden"> 
                 <span id="upload-icon" class="text-6xl mb-3 group-hover:scale-110 transition-transform">🖼️</span> 
-                <p id="upload-label" class="text-[11px] text-gray-400 font-black tracking-[0.2em] uppercase text-center px-4">Hold & Select All</p> 
+                <p id="upload-label" class="text-[11px] text-gray-400 font-black tracking-[0.2em] uppercase text-center px-4">Tap to open Gallery</p> 
             </label> 
 
             <button onclick="ignite()" id="sendBtn" class="w-full py-6 bg-white text-black font-black rounded-[30px] hover:bg-blue-600 hover:text-white transition-all active:scale-95 shadow-2xl uppercase tracking-[0.3em]">Ignite Transfer</button> 
@@ -96,9 +94,9 @@ function setType(type) {
     }); 
     document.getElementById(`tab-${type}`).classList.add('active-tab'); 
     document.getElementById('upload-icon').innerText = type === 'photo' ? '🖼️' : '📂'; 
-    document.getElementById('upload-label').innerText = type === 'photo' ? 'Open Gallery' : 'Open File Manager';
+    document.getElementById('upload-label').innerText = type === 'photo' ? 'Tap to open Gallery' : 'Open File Manager';
     
-    // গ্যালারি ফিক্স: ফটো ট্যাবে থাকলে শুধু ছবি দেখাবে, ফাইলে থাকলে সব।
+    // গ্যালারি ফিক্স: ফটো মোডে শুধু ইমেজ প্রম্পট করবে
     document.getElementById('fileInput').accept = type === 'photo' ? "image/*" : "*/*"; 
 } 
 
@@ -151,7 +149,7 @@ async function ignite() {
     const etaDisp = document.getElementById('eta-text'); 
     
     btn.disabled = true; 
-    btn.innerText = "🚀 SENDING..."; 
+    btn.innerText = "🚀 TRANSMITTING..."; 
 
     let sent = 0; 
     const total = queue.length; 
@@ -169,7 +167,7 @@ async function ignite() {
         }));
     }
 
-    btn.innerText = "✅ DONE"; 
+    btn.innerText = "✅ MISSION SUCCESS"; 
     btn.style.background = "#10b981";
     setTimeout(() => { location.reload(); }, 1500); 
 } 
