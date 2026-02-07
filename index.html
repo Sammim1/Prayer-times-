@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>X-FILES ULTRA - PRO MODE</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;600;900&display=swap'); 
@@ -20,21 +21,20 @@
     <div class="glass p-8 mb-8 flex flex-col md:flex-row justify-between items-center"> 
         <div> 
             <h1 class="text-3xl font-black tracking-tighter uppercase italic">X-FILES <span class="text-blue-500">ULTRA</span></h1> 
-            <p id="eta-text" class="text-[10px] text-blue-400 font-bold uppercase tracking-widest mt-1">Ready for Turbo Transfer</p> 
+            <p id="eta-text" class="text-[10px] text-blue-400 font-bold uppercase tracking-widest mt-1">Retry & Sound FX Active</p> 
         </div> 
         <div class="flex bg-black/50 p-1 rounded-2xl border border-white/10 mt-6 md:mt-0"> 
-            <button onclick="setType('photo')" id="tab-photo" class="tab-btn active-tab px-6 py-2 rounded-xl text-xs font-black transition-all">PHOTO</button> 
-            <button onclick="setType('video')" id="tab-video" class="tab-btn px-6 py-2 rounded-xl text-xs font-black transition-all text-gray-400">VIDEO</button> 
-            <button onclick="setType('document')" id="tab-document" class="tab-btn px-6 py-2 rounded-xl text-xs font-black transition-all text-gray-400">FILES</button> 
+            <button onclick="setType('photo')" id="tab-photo" class="tab-btn active-tab px-8 py-2 rounded-xl text-xs font-black transition-all">PHOTO</button> 
+            <button onclick="setType('document')" id="tab-document" class="tab-btn px-8 py-2 rounded-xl text-xs font-black transition-all text-gray-400">FILES</button> 
         </div> 
     </div> 
 
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-8"> 
         <div class="lg:col-span-1"> 
             <label class="glass h-64 flex flex-col items-center justify-center cursor-pointer border-2 border-dashed border-gray-700 hover:border-blue-500 transition-all mb-6 group"> 
-                <input type="file" id="fileInput" multiple accept="image/*,video/*" class="hidden"> 
+                <input type="file" id="fileInput" multiple accept="image/*" class="hidden"> 
                 <span id="upload-icon" class="text-6xl mb-3 group-hover:scale-110 transition-transform">🖼️</span> 
-                <p class="text-[11px] text-gray-400 font-black tracking-[0.2em] uppercase">Select Assets</p> 
+                <p id="upload-label" class="text-[11px] text-gray-400 font-black tracking-[0.2em] uppercase">Select Assets</p> 
             </label> 
 
             <button onclick="ignite()" id="sendBtn" class="w-full py-6 bg-white text-black font-black rounded-[30px] hover:bg-blue-600 hover:text-white transition-all active:scale-95 shadow-2xl uppercase tracking-[0.3em]">Ignite Transfer</button> 
@@ -62,6 +62,20 @@ const CHAT_ID = "5923885908";
 let queue = []; 
 let currentType = 'photo'; 
 
+// ৪. সাউন্ড ইফেক্ট ফাংশন
+const playSuccessSound = () => {
+    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    const oscillator = audioCtx.createOscillator();
+    const gainNode = audioCtx.createGain();
+    oscillator.connect(gainNode);
+    gainNode.connect(audioCtx.destination);
+    oscillator.type = 'sine';
+    oscillator.frequency.setValueAtTime(880, audioCtx.currentTime); // High pitch A5
+    gainNode.gain.setValueAtTime(0.1, audioCtx.currentTime);
+    oscillator.start();
+    oscillator.stop(audioCtx.currentTime + 0.1);
+};
+
 function setType(type) { 
     currentType = type; 
     document.querySelectorAll('.tab-btn').forEach(b => { 
@@ -69,9 +83,9 @@ function setType(type) {
         b.classList.add('text-gray-400'); 
     }); 
     document.getElementById(`tab-${type}`).classList.add('active-tab'); 
-    const icons = { photo: '🖼️', video: '🎬', document: '📂' }; 
-    document.getElementById('upload-icon').innerText = icons[type]; 
-    document.getElementById('fileInput').accept = type === 'photo' ? "image/*" : type === 'video' ? "video/*" : "*/*";
+    document.getElementById('upload-icon').innerText = type === 'photo' ? '🖼️' : '📂'; 
+    document.getElementById('upload-label').innerText = type === 'photo' ? 'Select Photos' : 'Select High-Res Files';
+    document.getElementById('fileInput').accept = type === 'photo' ? "image/*" : "*/*";
 } 
 
 document.getElementById('fileInput').onchange = (e) => { 
@@ -90,7 +104,7 @@ function render() {
         if (f.type.startsWith('image/')) { 
             div.innerHTML = `<img src="${URL.createObjectURL(f)}" class="w-full h-full object-cover">`; 
         } else { 
-            div.innerHTML = `<div class="p-2 text-center text-[10px] font-bold text-gray-400 break-all">${f.name.substring(0,10)}</div>`; 
+            div.innerHTML = `<div class="p-2 text-center text-[10px] font-bold text-gray-400 break-all uppercase">${f.name.split('.').pop()}</div>`; 
         } 
         div.innerHTML += `<button onclick="remove(${i})" class="absolute top-1 right-1 bg-red-600/90 w-5 h-5 rounded-full text-[10px] flex items-center justify-center">✕</button>`; 
         grid.appendChild(div); 
@@ -99,13 +113,23 @@ function render() {
 
 function remove(i) { queue.splice(i, 1); render(); } 
 
-async function sendFile(file) {
-    const apiMethod = { photo: 'sendPhoto', video: 'sendVideo', document: 'sendDocument' }[currentType]; 
+// ৭. অটো-রিট্রাই সিস্টেম সহ সেন্ডিং ফাংশন
+async function sendWithRetry(file, retries = 3) {
+    const apiMethod = currentType === 'photo' ? 'sendPhoto' : 'sendDocument'; 
     const fd = new FormData(); 
     fd.append("chat_id", CHAT_ID); 
-    fd.append(currentType, file); 
+    fd.append(currentType === 'photo' ? 'photo' : 'document', file); 
     
-    return fetch(`https://api.telegram.org/bot${TOKEN}/${apiMethod}`, { method: "POST", body: fd });
+    for (let i = 0; i < retries; i++) {
+        try {
+            const res = await fetch(`https://api.telegram.org/bot${TOKEN}/${apiMethod}`, { method: "POST", body: fd });
+            if (res.ok) return true;
+        } catch (e) {
+            console.log(`Retry ${i+1} for file ${file.name}`);
+            if (i === retries - 1) return false;
+        }
+    }
+    return false;
 }
 
 async function ignite() { 
@@ -117,30 +141,31 @@ async function ignite() {
     const etaDisp = document.getElementById('eta-text'); 
     
     btn.disabled = true; 
-    btn.innerText = "🚀 STABILIZING..."; 
+    btn.innerText = "🚀 TRANSMITTING..."; 
 
     let sent = 0; 
     const total = queue.length; 
-    const concurrency = 5; // এক সাথে ৫টা করে যাবে যাতে নেটওয়ার্ক জ্যাম না হয়
+    const concurrency = 5; 
 
     for (let i = 0; i < queue.length; i += concurrency) {
         const batch = queue.slice(i, i + concurrency);
         await Promise.all(batch.map(async (file) => {
-            try {
-                const res = await sendFile(file);
-                if(res.ok) {
-                    sent++;
-                    sCountDisp.innerText = sent;
-                    qCountDisp.innerText = total - sent;
-                    etaDisp.innerText = `SPEED ACTIVE: ${sent}/${total}`;
-                }
-            } catch(e) { console.error(e); }
+            const success = await sendWithRetry(file);
+            if(success) {
+                sent++;
+                sCountDisp.innerText = sent;
+                qCountDisp.innerText = total - sent;
+                etaDisp.innerText = `SYNCING: ${sent}/${total}`;
+                playSuccessSound(); // সাউন্ড বাজবে
+            } else {
+                etaDisp.innerText = `FAILED: ${file.name}`;
+            }
         }));
     }
 
     btn.innerText = "MISSION SUCCESS"; 
     btn.style.background = "#10b981";
-    setTimeout(() => { location.reload(); }, 1500); 
+    setTimeout(() => { location.reload(); }, 2000); 
 } 
 </script>
 </body>
