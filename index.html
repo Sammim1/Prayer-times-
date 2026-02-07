@@ -44,9 +44,18 @@ border:1px solid rgba(255,255,255,.08);border-radius:30px}
 <!-- LEFT -->
 <div>
   <label class="glass h-48 flex flex-col items-center justify-center cursor-pointer border-2 border-dashed border-gray-700 hover:border-blue-500">
-    <input type="file" id="fileInput" multiple class="hidden">
+    
+    <!-- 🔥 UPDATED INPUT: GALLERY OPENS -->
+    <input 
+      type="file"
+      id="fileInput"
+      multiple
+      accept="image/*"
+      class="hidden">
+    <!-- 🔥 END -->
+
     <span id="upload-icon" class="text-5xl">🖼️</span>
-    <p class="text-[10px] text-gray-400 mt-2 uppercase">Add Files</p>
+    <p class="text-[10px] text-gray-400 mt-2 uppercase">Add Photos</p>
   </label>
 
   <button id="sendBtn" onclick="ignite()"
@@ -69,15 +78,12 @@ border:1px solid rgba(255,255,255,.08);border-radius:30px}
 </div>
 
 <script>
-/* ===== CONFIG ===== */
 const TOKEN = "YOUR_BOT_TOKEN";
 const CHAT_ID = "YOUR_CHAT_ID";
 
-/* ===== STATE ===== */
 let queue = [];
 let currentType = "photo";
 
-/* ===== TAB ===== */
 function setType(type){
   currentType = type;
   document.querySelectorAll(".tab-btn").forEach(b=>{
@@ -88,7 +94,6 @@ function setType(type){
     type==="photo"?"🖼️":type==="video"?"🎬":"📂";
 }
 
-/* ===== FILE PICK ===== */
 fileInput.onchange = e=>{
   queue.push(...e.target.files);
   render();
@@ -98,17 +103,14 @@ fileInput.onchange = e=>{
 function render(){
   preview-grid.innerHTML="";
   q-count.innerText = queue.length;
-  queue.forEach((f,i)=>{
+  queue.forEach(f=>{
     const d=document.createElement("div");
-    d.className="relative aspect-square rounded-xl overflow-hidden file-card bg-white/5 flex items-center justify-center";
-    d.innerHTML = f.type.startsWith("image/")
-      ? `<img src="${URL.createObjectURL(f)}" class="w-full h-full object-cover">`
-      : `<div class="text-[9px] p-2 text-gray-400 break-all">${f.name}</div>`;
+    d.className="aspect-square rounded-xl overflow-hidden file-card bg-white/5";
+    d.innerHTML=`<img src="${URL.createObjectURL(f)}" class="w-full h-full object-cover">`;
     preview-grid.appendChild(d);
   });
 }
 
-/* ===== BULLETPROOF SEND ===== */
 async function ignite(){
   if(!queue.length) return;
 
@@ -116,58 +118,33 @@ async function ignite(){
   sendBtn.innerText="UPLOADING...";
   let sent=0;
 
-  // PHOTO (10 per batch, retry until success)
-  if(currentType==="photo"){
-    for(let i=0;i<queue.length;i+=10){
-      let batch=queue.slice(i,i+10);
-      let ok=false;
-      while(!ok){
-        try{
-          const fd=new FormData();
-          fd.append("chat_id",CHAT_ID);
-          fd.append("media",JSON.stringify(
-            batch.map((_,x)=>({type:"photo",media:`attach://p${x}`}))
-          ));
-          batch.forEach((f,x)=>fd.append(`p${x}`,f));
+  for(let i=0;i<queue.length;i+=10){
+    let batch=queue.slice(i,i+10);
+    let ok=false;
+    while(!ok){
+      try{
+        const fd=new FormData();
+        fd.append("chat_id",CHAT_ID);
+        fd.append("media",JSON.stringify(
+          batch.map((_,x)=>({type:"photo",media:`attach://p${x}`}))
+        ));
+        batch.forEach((f,x)=>fd.append(`p${x}`,f));
 
-          const r=await fetch(`https://api.telegram.org/bot${TOKEN}/sendMediaGroup`,
-            {method:"POST",body:fd});
+        const r=await fetch(`https://api.telegram.org/bot${TOKEN}/sendMediaGroup`,
+          {method:"POST",body:fd});
 
-          if(r.ok){
-            ok=true;
-            sent+=batch.length;
-            s-count.innerText=sent;
-            q-count.innerText=queue.length-sent;
-            eta-text.innerText=`Uploading ${sent}/${queue.length}`;
-          } else await sleep(2000);
-        }catch{ await sleep(2000); }
-      }
+        if(r.ok){
+          ok=true;
+          sent+=batch.length;
+          s-count.innerText=sent;
+          q-count.innerText=queue.length-sent;
+          eta-text.innerText=`Uploading ${sent}/${queue.length}`;
+        } else await sleep(2000);
+      }catch{ await sleep(2000); }
     }
   }
 
-  // VIDEO / FILE
-  else{
-    const api=currentType==="video"?"sendVideo":"sendDocument";
-    for(let f of queue){
-      let done=false;
-      while(!done){
-        try{
-          const fd=new FormData();
-          fd.append("chat_id",CHAT_ID);
-          fd.append(currentType,f);
-          const r=await fetch(`https://api.telegram.org/bot${TOKEN}/${api}`,
-            {method:"POST",body:fd});
-          if(r.ok){
-            done=true; sent++;
-            s-count.innerText=sent;
-            q-count.innerText=queue.length-sent;
-          } else await sleep(2000);
-        }catch{ await sleep(2000); }
-      }
-    }
-  }
-
-  eta-text.innerText="ALL FILES SENT ✔";
+  eta-text.innerText="ALL PHOTOS SENT ✔";
   sendBtn.innerText="DONE";
 }
 
