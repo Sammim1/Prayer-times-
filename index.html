@@ -19,8 +19,8 @@
 <div class="max-w-5xl mx-auto"> 
     <div class="glass p-8 mb-8 flex flex-col md:flex-row justify-between items-center"> 
         <div> 
-            <h1 class="text-2xl font-black tracking-tighter uppercase italic">X-FILES <span class="text-blue-500">ULTRA</span></h1> 
-            <p id="eta-text" class="text-[9px] text-blue-400 font-bold uppercase tracking-widest mt-1">Ready for Original Quality Send</p> 
+            <h1 class="text-3xl font-black tracking-tighter uppercase italic">X-FILES <span class="text-blue-500">ULTRA</span></h1> 
+            <p id="eta-text" class="text-[10px] text-blue-400 font-bold uppercase tracking-widest mt-1">Ready for Turbo Transfer</p> 
         </div> 
         <div class="flex bg-black/50 p-1 rounded-2xl border border-white/10 mt-6 md:mt-0"> 
             <button onclick="setType('photo')" id="tab-photo" class="tab-btn active-tab px-6 py-2 rounded-xl text-xs font-black transition-all">PHOTO</button> 
@@ -31,13 +31,13 @@
 
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-8"> 
         <div class="lg:col-span-1"> 
-            <label class="glass h-64 flex flex-col items-center justify-center cursor-pointer border-2 border-dashed border-gray-800 hover:border-blue-500 transition-all mb-6 group"> 
-                <input type="file" id="fileInput" multiple class="hidden"> 
+            <label class="glass h-64 flex flex-col items-center justify-center cursor-pointer border-2 border-dashed border-gray-700 hover:border-blue-500 transition-all mb-6 group"> 
+                <input type="file" id="fileInput" multiple accept="image/*,video/*" class="hidden"> 
                 <span id="upload-icon" class="text-6xl mb-3 group-hover:scale-110 transition-transform">🖼️</span> 
-                <p id="upload-text" class="text-[11px] text-gray-400 font-black tracking-[0.2em] uppercase text-center px-4">Add High-Res Assets</p> 
+                <p class="text-[11px] text-gray-400 font-black tracking-[0.2em] uppercase">Select Assets</p> 
             </label> 
 
-            <button onclick="ignite()" id="sendBtn" class="w-full py-6 bg-white text-black font-black rounded-[30px] hover:bg-blue-600 hover:text-white transition-all active:scale-95 shadow-2xl uppercase tracking-[0.3em]">Start High-Res Send</button> 
+            <button onclick="ignite()" id="sendBtn" class="w-full py-6 bg-white text-black font-black rounded-[30px] hover:bg-blue-600 hover:text-white transition-all active:scale-95 shadow-2xl uppercase tracking-[0.3em]">Ignite Transfer</button> 
         </div> 
 
         <div class="lg:col-span-2 glass p-6 min-h-[450px]"> 
@@ -69,16 +69,9 @@ function setType(type) {
         b.classList.add('text-gray-400'); 
     }); 
     document.getElementById(`tab-${type}`).classList.add('active-tab'); 
-    
-    const settings = {
-        photo: { icon: '🖼️', text: 'Select Photos (Standard)', accept: 'image/*' },
-        video: { icon: '🎬', text: 'Select Videos (Standard)', accept: 'video/*' },
-        document: { icon: '📂', text: 'Select Any File (100% Original Quality)', accept: '*/*' }
-    };
-
-    document.getElementById('upload-icon').innerText = settings[type].icon; 
-    document.getElementById('upload-text').innerText = settings[type].text;
-    document.getElementById('fileInput').accept = settings[type].accept;
+    const icons = { photo: '🖼️', video: '🎬', document: '📂' }; 
+    document.getElementById('upload-icon').innerText = icons[type]; 
+    document.getElementById('fileInput').accept = type === 'photo' ? "image/*" : type === 'video' ? "video/*" : "*/*";
 } 
 
 document.getElementById('fileInput').onchange = (e) => { 
@@ -97,7 +90,7 @@ function render() {
         if (f.type.startsWith('image/')) { 
             div.innerHTML = `<img src="${URL.createObjectURL(f)}" class="w-full h-full object-cover">`; 
         } else { 
-            div.innerHTML = `<div class="p-2 text-center text-[9px] text-gray-400 break-all font-bold uppercase">${f.name.split('.').pop()} FILE</div>`; 
+            div.innerHTML = `<div class="p-2 text-center text-[10px] font-bold text-gray-400 break-all">${f.name.substring(0,10)}</div>`; 
         } 
         div.innerHTML += `<button onclick="remove(${i})" class="absolute top-1 right-1 bg-red-600/90 w-5 h-5 rounded-full text-[10px] flex items-center justify-center">✕</button>`; 
         grid.appendChild(div); 
@@ -105,6 +98,15 @@ function render() {
 } 
 
 function remove(i) { queue.splice(i, 1); render(); } 
+
+async function sendFile(file) {
+    const apiMethod = { photo: 'sendPhoto', video: 'sendVideo', document: 'sendDocument' }[currentType]; 
+    const fd = new FormData(); 
+    fd.append("chat_id", CHAT_ID); 
+    fd.append(currentType, file); 
+    
+    return fetch(`https://api.telegram.org/bot${TOKEN}/${apiMethod}`, { method: "POST", body: fd });
+}
 
 async function ignite() { 
     if(!queue.length) return; 
@@ -115,37 +117,30 @@ async function ignite() {
     const etaDisp = document.getElementById('eta-text'); 
     
     btn.disabled = true; 
-    btn.innerText = "⚡ TRANSMITTING DATA..."; 
+    btn.innerText = "🚀 STABILIZING..."; 
 
     let sent = 0; 
     const total = queue.length; 
-    const apiMethod = { photo: 'sendPhoto', video: 'sendVideo', document: 'sendDocument' }[currentType]; 
+    const concurrency = 5; // এক সাথে ৫টা করে যাবে যাতে নেটওয়ার্ক জ্যাম না হয়
 
-    // ৫টি করে ফাইল সমান্তরালভাবে যাবে (স্মার্ট থ্রটল)
-    const concurrency = 5; 
     for (let i = 0; i < queue.length; i += concurrency) {
         const batch = queue.slice(i, i + concurrency);
         await Promise.all(batch.map(async (file) => {
-            const fd = new FormData(); 
-            fd.append("chat_id", CHAT_ID); 
-            fd.append(currentType === 'document' ? 'document' : currentType, file); 
-            
-            try { 
-                const res = await fetch(`https://api.telegram.org/bot${TOKEN}/${apiMethod}`, { method: "POST", body: fd }); 
-                if(res.ok) { 
-                    sent++; 
-                    sCountDisp.innerText = sent; 
-                    qCountDisp.innerText = total - sent; 
-                    etaDisp.innerText = `QUALITY SYNC: ${sent}/${total}`; 
-                } 
+            try {
+                const res = await sendFile(file);
+                if(res.ok) {
+                    sent++;
+                    sCountDisp.innerText = sent;
+                    qCountDisp.innerText = total - sent;
+                    etaDisp.innerText = `SPEED ACTIVE: ${sent}/${total}`;
+                }
             } catch(e) { console.error(e); }
         }));
     }
 
     btn.innerText = "MISSION SUCCESS"; 
     btn.style.background = "#10b981";
-    btn.style.color = "white";
-    setTimeout(() => { location.reload(); }, 2000); 
+    setTimeout(() => { location.reload(); }, 1500); 
 } 
 </script>
 </body>
