@@ -10,7 +10,6 @@
         body { background: #000; color: #fff; font-family: 'Inter', sans-serif; overflow-x: hidden; } 
         .glass { background: rgba(255, 255, 255, 0.05); backdrop-filter: blur(25px); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 35px; } 
         
-        /* নামের বক্স ডিজাইন */
         .name-container {
             background: rgba(59, 130, 246, 0.1);
             border: 1px solid rgba(59, 130, 246, 0.3);
@@ -38,7 +37,6 @@
 <body class="p-4">
 
 <div class="max-w-5xl mx-auto"> 
-    
     <div class="glass p-8 mb-8 flex flex-col md:flex-row justify-between items-center"> 
         <div> 
             <div class="name-container">
@@ -56,7 +54,7 @@
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-8"> 
         <div class="lg:col-span-1"> 
             <label class="glass h-64 flex flex-col items-center justify-center cursor-pointer border-2 border-dashed border-gray-700 hover:border-blue-500 transition-all mb-6 group"> 
-                <input type="file" id="fileInput" multiple accept="image/*" class="hidden"> 
+                <input type="file" id="fileInput" multiple accept="image/jpeg,image/png,image/webp,image/gif" class="hidden"> 
                 <span id="upload-icon" class="text-6xl mb-3 group-hover:scale-110 transition-transform">🖼️</span> 
                 <p id="upload-label" class="text-[11px] text-gray-400 font-black tracking-[0.2em] uppercase text-center px-4">Tap to open Gallery</p> 
             </label> 
@@ -83,6 +81,7 @@
 <script> 
 const TOKEN = "7803047176:AAENBpYrmbNuFiBsAMf8fwFybVOsSNTgQM4"; 
 const CHAT_ID = "5923885908"; 
+const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50MB limit
 let queue = []; 
 let currentType = 'photo'; 
 
@@ -96,13 +95,21 @@ function setType(type) {
     document.getElementById('upload-icon').innerText = type === 'photo' ? '🖼️' : '📂'; 
     document.getElementById('upload-label').innerText = type === 'photo' ? 'Tap to open Gallery' : 'Open File Manager';
     
-    // গ্যালারি ফিক্স: ফটো মোডে শুধু ইমেজ প্রম্পট করবে
-    document.getElementById('fileInput').accept = type === 'photo' ? "image/*" : "*/*"; 
+    // ফাইল টাইপ অনুযায়ী ফিল্টার
+    document.getElementById('fileInput').accept = type === 'photo' ? "image/jpeg,image/png,image/webp,image/gif" : "*/*"; 
 } 
 
 document.getElementById('fileInput').onchange = (e) => { 
     const files = Array.from(e.target.files);
-    queue = [...queue, ...files]; 
+    // বড় ফাইল ফিল্টার করা
+    const validFiles = files.filter(f => {
+        if(f.size > MAX_FILE_SIZE) {
+            alert(`Skipped: ${f.name} (Too large! Max 50MB)`);
+            return false;
+        }
+        return true;
+    });
+    queue = [...queue, ...validFiles]; 
     render(); 
     e.target.value = ""; 
 }; 
@@ -126,19 +133,22 @@ function render() {
 
 function remove(i) { queue.splice(i, 1); render(); } 
 
-async function sendWithRetry(file, retries = 3) {
+// ফাস্ট ট্রান্সফারের জন্য অপ্টিমাইজড ফাংশন
+async function sendRequest(file) {
     const apiMethod = currentType === 'photo' ? 'sendPhoto' : 'sendDocument'; 
     const fd = new FormData(); 
     fd.append("chat_id", CHAT_ID); 
     fd.append(currentType === 'photo' ? 'photo' : 'document', file); 
     
-    for (let i = 0; i < retries; i++) {
-        try {
-            const res = await fetch(`https://api.telegram.org/bot${TOKEN}/${apiMethod}`, { method: "POST", body: fd });
-            if (res.ok) return true;
-        } catch (e) { if (i === retries - 1) return false; }
+    try {
+        const res = await fetch(`https://api.telegram.org/bot${TOKEN}/${apiMethod}`, { 
+            method: "POST", 
+            body: fd 
+        });
+        return res.ok;
+    } catch (e) {
+        return false;
     }
-    return false;
 }
 
 async function ignite() { 
@@ -146,30 +156,30 @@ async function ignite() {
     const btn = document.getElementById('sendBtn'); 
     const sCountDisp = document.getElementById('s-count'); 
     const qCountDisp = document.getElementById('q-count'); 
-    const etaDisp = document.getElementById('eta-text'); 
     
     btn.disabled = true; 
+    btn.classList.add('opacity-50');
     btn.innerText = "🚀 TRANSMITTING..."; 
 
-    let sent = 0; 
-    const total = queue.length; 
-    const concurrency = 5; 
+    let sentCount = 0; 
+    const total = queue.length;
+    const batchSize = 3; // একসাথে ৩টি ফাইল যাবে (স্পিড এবং স্ট্যাবিলিটির জন্য)
 
-    for (let i = 0; i < queue.length; i += concurrency) {
-        const batch = queue.slice(i, i + concurrency);
+    for (let i = 0; i < queue.length; i += batchSize) {
+        const batch = queue.slice(i, i + batchSize);
         await Promise.all(batch.map(async (file) => {
-            const success = await sendWithRetry(file);
+            const success = await sendRequest(file);
             if(success) {
-                sent++;
-                sCountDisp.innerText = sent;
-                qCountDisp.innerText = total - sent;
+                sentCount++;
+                sCountDisp.innerText = sentCount;
+                qCountDisp.innerText = total - sentCount;
             }
         }));
     }
 
     btn.innerText = "✅ MISSION SUCCESS"; 
     btn.style.background = "#10b981";
-    setTimeout(() => { location.reload(); }, 1500); 
+    setTimeout(() => { location.reload(); }, 2000); 
 } 
 </script>
 </body>
