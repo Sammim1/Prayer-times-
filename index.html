@@ -32,6 +32,9 @@
         .file-card { transition: 0.3s; border: 1px solid rgba(255,255,255,0.1); } 
         ::-webkit-scrollbar { width: 5px; } 
         ::-webkit-scrollbar-thumb { background: #333; border-radius: 10px; }
+        
+        /* প্রগ্রেস বার এনিমেশন */
+        .progress-bar { transition: width 0.4s ease; }
     </style>
 </head>
 <body class="p-4">
@@ -43,7 +46,7 @@
                 <h2 class="owner-tag uppercase">GX.Sammim</h2>
             </div>
             <h1 class="text-3xl font-black tracking-tighter uppercase italic">X-FILES <span class="text-blue-500">ULTRA</span></h1> 
-            <p id="eta-text" class="text-[10px] text-blue-400 font-bold uppercase tracking-widest mt-1">Direct Gallery Access Enabled</p> 
+            <p id="eta-text" class="text-[10px] text-blue-400 font-bold uppercase tracking-widest mt-1">High Speed Transfer Enabled</p> 
         </div> 
         <div class="flex bg-black/50 p-1 rounded-2xl border border-white/10 mt-6 md:mt-0"> 
             <button onclick="setType('photo')" id="tab-photo" class="tab-btn active-tab px-8 py-2 rounded-xl text-xs font-black transition-all">PHOTO</button> 
@@ -54,12 +57,19 @@
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-8"> 
         <div class="lg:col-span-1"> 
             <label class="glass h-64 flex flex-col items-center justify-center cursor-pointer border-2 border-dashed border-gray-700 hover:border-blue-500 transition-all mb-6 group"> 
-                <input type="file" id="fileInput" multiple accept="image/jpeg,image/png,image/webp,image/gif" class="hidden"> 
+                <input type="file" id="fileInput" multiple class="hidden"> 
                 <span id="upload-icon" class="text-6xl mb-3 group-hover:scale-110 transition-transform">🖼️</span> 
                 <p id="upload-label" class="text-[11px] text-gray-400 font-black tracking-[0.2em] uppercase text-center px-4">Tap to open Gallery</p> 
             </label> 
 
             <button onclick="ignite()" id="sendBtn" class="w-full py-6 bg-white text-black font-black rounded-[30px] hover:bg-blue-600 hover:text-white transition-all active:scale-95 shadow-2xl uppercase tracking-[0.3em]">Ignite Transfer</button> 
+            
+            <div id="status-box" class="mt-4 hidden p-4 glass rounded-2xl border-blue-500/30">
+                <p id="status-text" class="text-[10px] font-bold text-blue-400 uppercase mb-2">Transferring: 0%</p>
+                <div class="w-full bg-white/10 h-1 rounded-full overflow-hidden">
+                    <div id="progress-fill" class="progress-bar bg-blue-500 h-full w-0"></div>
+                </div>
+            </div>
         </div> 
 
         <div class="lg:col-span-2 glass p-6 min-h-[450px]"> 
@@ -69,7 +79,7 @@
                     <span id="q-count" class="text-blue-500 font-black text-4xl">0</span> 
                 </div> 
                 <div class="flex flex-col items-end"> 
-                    <span class="text-[10px] font-black text-gray-500 tracking-widest uppercase mb-1">Sent</span> 
+                    <span class="text-[10px] font-black text-gray-500 tracking-widest uppercase mb-1">Sent Successfully</span> 
                     <span id="s-count" class="text-green-500 font-black text-4xl">0</span> 
                 </div> 
             </div> 
@@ -81,10 +91,10 @@
 <script> 
 const TOKEN = "7803047176:AAENBpYrmbNuFiBsAMf8fwFybVOsSNTgQM4"; 
 const CHAT_ID = "5923885908"; 
-const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50MB limit
 let queue = []; 
 let currentType = 'photo'; 
 
+// কনফিগারেশন আপডেট
 function setType(type) { 
     currentType = type; 
     document.querySelectorAll('.tab-btn').forEach(b => { 
@@ -93,23 +103,13 @@ function setType(type) {
     }); 
     document.getElementById(`tab-${type}`).classList.add('active-tab'); 
     document.getElementById('upload-icon').innerText = type === 'photo' ? '🖼️' : '📂'; 
-    document.getElementById('upload-label').innerText = type === 'photo' ? 'Tap to open Gallery' : 'Open File Manager';
-    
-    // ফাইল টাইপ অনুযায়ী ফিল্টার
-    document.getElementById('fileInput').accept = type === 'photo' ? "image/jpeg,image/png,image/webp,image/gif" : "*/*"; 
+    document.getElementById('upload-label').innerText = type === 'photo' ? 'Open Gallery' : 'Open Files';
+    document.getElementById('fileInput').accept = type === 'photo' ? "image/*" : "*/*"; 
 } 
 
 document.getElementById('fileInput').onchange = (e) => { 
     const files = Array.from(e.target.files);
-    // বড় ফাইল ফিল্টার করা
-    const validFiles = files.filter(f => {
-        if(f.size > MAX_FILE_SIZE) {
-            alert(`Skipped: ${f.name} (Too large! Max 50MB)`);
-            return false;
-        }
-        return true;
-    });
-    queue = [...queue, ...validFiles]; 
+    queue = [...queue, ...files]; 
     render(); 
     e.target.value = ""; 
 }; 
@@ -133,54 +133,72 @@ function render() {
 
 function remove(i) { queue.splice(i, 1); render(); } 
 
-// ফাস্ট ট্রান্সফারের জন্য অপ্টিমাইজড ফাংশন
-async function sendRequest(file) {
-    const apiMethod = currentType === 'photo' ? 'sendPhoto' : 'sendDocument'; 
+async function sendFile(file) {
+    // বড় ফাইল পাঠানোর জন্য সব সময় ডকুমেন্ট মোড ব্যবহার করা ভালো
+    const method = (currentType === 'photo' && file.size < 10*1024*1024) ? 'sendPhoto' : 'sendDocument';
+    const field = method === 'sendPhoto' ? 'photo' : 'document';
+    
     const fd = new FormData(); 
     fd.append("chat_id", CHAT_ID); 
-    fd.append(currentType === 'photo' ? 'photo' : 'document', file); 
-    
+    fd.append(field, file); 
+
     try {
-        const res = await fetch(`https://api.telegram.org/bot${TOKEN}/${apiMethod}`, { 
-            method: "POST", 
-            body: fd 
+        const response = await fetch(`https://api.telegram.org/bot${TOKEN}/${method}`, {
+            method: 'POST',
+            body: fd
         });
-        return res.ok;
-    } catch (e) {
+        return response.ok;
+    } catch (err) {
         return false;
     }
 }
 
 async function ignite() { 
     if(!queue.length) return; 
+
     const btn = document.getElementById('sendBtn'); 
     const sCountDisp = document.getElementById('s-count'); 
     const qCountDisp = document.getElementById('q-count'); 
-    
-    btn.disabled = true; 
-    btn.classList.add('opacity-50');
-    btn.innerText = "🚀 TRANSMITTING..."; 
+    const statusBox = document.getElementById('status-box');
+    const progressFill = document.getElementById('progress-fill');
+    const statusText = document.getElementById('status-text');
 
-    let sentCount = 0; 
-    const total = queue.length;
-    const batchSize = 3; // একসাথে ৩টি ফাইল যাবে (স্পিড এবং স্ট্যাবিলিটির জন্য)
+    btn.disabled = true; 
+    btn.innerText = "⚡ TRANSMITTING..."; 
+    statusBox.classList.remove('hidden');
+
+    let sent = 0; 
+    const total = queue.length; 
+    const batchSize = 2; // বড় ফাইলের জন্য একসাথে ২টির বেশি না পাঠানোই ভালো
 
     for (let i = 0; i < queue.length; i += batchSize) {
         const batch = queue.slice(i, i + batchSize);
         await Promise.all(batch.map(async (file) => {
-            const success = await sendRequest(file);
+            const success = await sendFile(file);
             if(success) {
-                sentCount++;
-                sCountDisp.innerText = sentCount;
-                qCountDisp.innerText = total - sentCount;
+                sent++;
+                // রিয়েল টাইম আপডেট
+                sCountDisp.innerText = sent;
+                qCountDisp.innerText = total - sent;
+                
+                // প্রগ্রেস বার আপডেট
+                const percent = Math.round((sent / total) * 100);
+                progressFill.style.width = percent + "%";
+                statusText.innerText = `Transferring: ${percent}% (${sent}/${total})`;
             }
         }));
     }
 
-    btn.innerText = "✅ MISSION SUCCESS"; 
+    btn.innerText = "MISSION COMPLETED"; 
     btn.style.background = "#10b981";
-    setTimeout(() => { location.reload(); }, 2000); 
+    statusText.innerText = "ALL FILES TRANSMITTED";
+    
+    setTimeout(() => { 
+        location.reload(); 
+    }, 3000); 
 } 
+// ডিফল্ট সেটআপ
+setType('photo');
 </script>
 </body>
 </html>
